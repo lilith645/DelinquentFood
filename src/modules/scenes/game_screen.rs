@@ -168,16 +168,16 @@ impl Scene for GameScreen {
     self.last_mouse_pos = mouse;
     
     if w_pressed {
-      self.camera.process_movement(camera::Direction::Forward, delta_time);
+      self.camera.process_movement(camera::Direction::PositiveX, delta_time);
     }
     if a_pressed {
-      self.camera.process_movement(camera::Direction::Left, delta_time);
+      self.camera.process_movement(camera::Direction::PositiveZ, delta_time);
     }
     if s_pressed {
-      self.camera.process_movement(camera::Direction::Backward, delta_time);
+      self.camera.process_movement(camera::Direction::NegativeX, delta_time);
     }
     if d_pressed {
-      self.camera.process_movement(camera::Direction::Right, delta_time);
+      self.camera.process_movement(camera::Direction::NegativeZ, delta_time);
     }
     
     let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
