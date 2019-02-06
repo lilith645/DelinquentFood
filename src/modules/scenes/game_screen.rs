@@ -6,12 +6,16 @@ use crate::modules::scenes::Scene;
 use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
+use crate::modules::update::update_game;
+use crate::modules::physics::collisions;
+
 use rand;
 use rand::{thread_rng};
 
 use cgmath::{Vector2, Vector3};
 
 const DEFAULT_ZOOM: f32 = 1.0;
+const DELTA_STEP: f32 = 0.1;
 
 pub struct GameScreen {
   data: SceneData,
@@ -21,20 +25,26 @@ pub struct GameScreen {
   camera: camera::Camera,
   rng: rand::prelude::ThreadRng,
   last_mouse_pos: Vector2<f32>,
+  total_delta: f32,
 }
 
 impl GameScreen {
   pub fn new(window_size: Vector2<f32>) -> GameScreen {
     println!("Game Screen");
     
+    let mut camera = camera::Camera::default_vk();
+    camera.set_position(Vector3::new(-15.0, 30.0, 0.0));
+    camera.set_pitch(-60.0);
+    
     GameScreen {
       data: SceneData::new(window_size),
       zoom: 1.0, // 0.5 to 2.0
       escaped_pressed_last_frame: false,
       screen_offset: Vector2::new(0.0, 0.0),
-      camera: camera::Camera::default_vk(),
+      camera: camera,
       rng: thread_rng(),
       last_mouse_pos: Vector2::new(-1.0, -1.0),
+      total_delta: 0.0,
     }
   }
   
@@ -47,6 +57,7 @@ impl GameScreen {
       camera,
       rng,
       last_mouse_pos: Vector2::new(-1.0, -1.0),
+      total_delta: 0.0,
     }
   }
   
@@ -117,6 +128,7 @@ impl Scene for GameScreen {
   
   fn update(&mut self, delta_time: f32) {
     self.mut_data().controller.update();
+    self.total_delta += delta_time;
     
     let mouse = self.data().mouse_pos;
     let left_clicked = self.data().left_mouse;
@@ -168,6 +180,15 @@ impl Scene for GameScreen {
       self.camera.process_movement(camera::Direction::Right, delta_time);
     }
     
+    let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
+    
+    for i in 0..delta_steps {
+      update_game(DELTA_STEP);
+      collisions(DELTA_STEP);
+      
+      self.total_delta -= DELTA_STEP;
+    }
+    
     let window_dimensions = self.data().window_dim;
     
     self.screen_offset.x=(window_dimensions.x*self.zoom)*0.5;
@@ -180,8 +201,9 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::lerp_ortho_camera_to_size(self.data.window_dim*self.zoom, Vector2::new(0.05, 0.05)));
     draw_calls.push(DrawCall::set_camera(self.camera.clone()));
     
-        draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, -5.0, -0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(-90.0, 0.0, 0.0), "Lance".to_string()));
-    draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, -5.0, -7.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
-    draw_calls.push(DrawCall::draw_model(Vector3::new(5.0, -5.0, -5.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Tower".to_string()));
+        draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 1.2, -0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(-90.0, 0.0, 0.0), "Lance".to_string()));
+    draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 5.0, -7.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
+    draw_calls.push(DrawCall::draw_model(Vector3::new(5.0, 1.8, -5.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Tower".to_string()));
+    draw_calls.push(DrawCall::draw_model(Vector3::new(0.0, 0.0, 0.0), Vector3::new(10.0, 1.0, 10.0), Vector3::new(0.0, 0.0, 0.0), "Floor".to_string()));
   }
 }
