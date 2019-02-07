@@ -8,6 +8,7 @@ use crate::modules::scenes::MenuScreen;
 
 use crate::modules::update::update_game;
 use crate::modules::physics::collisions;
+use crate::modules::maploader::Map;
 
 use rand;
 use rand::{thread_rng};
@@ -26,6 +27,7 @@ pub struct GameScreen {
   rng: rand::prelude::ThreadRng,
   last_mouse_pos: Vector2<f32>,
   total_delta: f32,
+  map: Map,
 }
 
 impl GameScreen {
@@ -45,6 +47,7 @@ impl GameScreen {
       rng: thread_rng(),
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
+      map: Map::new(),
     }
   }
   
@@ -58,6 +61,7 @@ impl GameScreen {
       rng,
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
+      map: Map::new(),
     }
   }
   
@@ -142,6 +146,8 @@ impl Scene for GameScreen {
     let mut a_pressed = self.data().keys.a_pressed();
     let mut s_pressed = self.data().keys.s_pressed();
     let mut d_pressed = self.data().keys.d_pressed();
+    let mut r_pressed = self.data().keys.r_pressed();
+    let mut f_pressed = self.data().keys.f_pressed();
     
     if self.data().window_resized {
       self.mut_data().next_scene = true;
@@ -179,10 +185,17 @@ impl Scene for GameScreen {
     if d_pressed {
       self.camera.process_movement(camera::Direction::NegativeZ, delta_time);
     }
+    if r_pressed {
+      self.camera.process_movement(camera::Direction::PositiveY, delta_time);
+    }
+    if f_pressed {
+      self.camera.process_movement(camera::Direction::NegativeY, delta_time);
+    }
     
     let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
     
     for i in 0..delta_steps {
+     // println!("Update is happening: {}", self.total_delta);
       update_game(DELTA_STEP);
       collisions(DELTA_STEP);
       
@@ -201,9 +214,11 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::lerp_ortho_camera_to_size(self.data.window_dim*self.zoom, Vector2::new(0.05, 0.05)));
     draw_calls.push(DrawCall::set_camera(self.camera.clone()));
     
-        draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 1.2, -0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(-90.0, 0.0, 0.0), "Lance".to_string()));
+    self.map.draw(draw_calls);
+    
+    draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 1.2, -0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(-90.0, 0.0, 0.0), "Lance".to_string()));
     draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 5.0, -7.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
     draw_calls.push(DrawCall::draw_model(Vector3::new(5.0, 1.8, -5.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Tower".to_string()));
-    draw_calls.push(DrawCall::draw_model(Vector3::new(0.0, 0.0, 0.0), Vector3::new(10.0, 1.0, 10.0), Vector3::new(0.0, 0.0, 0.0), "Floor".to_string()));
+    
   }
 }

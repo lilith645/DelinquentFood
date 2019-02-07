@@ -66,10 +66,10 @@ fn main() {
                            String::from("./resources/Textures/Logo.png"));
   
   graphics.add_model("Lance".to_string(), "./resources/Models/Lance.glb".to_string());
-  graphics.add_model("Chair".to_string(), "./resources/Models/chair-1stattempt.gltf".to_string());
-  graphics.add_model("Sponza".to_string(), "./resources/Models/Sponze/Sponza.gltf".to_string());
+  graphics.add_model("Chair".to_string(), "./resources/Models/chair-1stattempt.glb".to_string());
   graphics.add_model("Tower".to_string(), "./resources/Models/Tower.glb".to_string());
   graphics.add_model("Floor".to_string(), "./resources/Models/Floor/Floor.glb".to_string());
+  graphics.add_model("FloorPath".to_string(), "./resources/Models/Floor/FloorPath.glb".to_string());
   
   graphics.create_instance_buffer("EntityBuffer".to_string());
   
