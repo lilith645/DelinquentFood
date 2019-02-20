@@ -4,3 +4,6 @@
 [submodule "Maat-InputHandler"]
 	path = Maat-InputHandler
 	url = https://github.com/lilith645/Maat-InputHandler.git
+[submodule "windys-modeling-agency"]
+	path = windys-modeling-agency
+	url = https://github.com/Lord-Windy/windys-modeling-agency.git

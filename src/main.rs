@@ -65,18 +65,19 @@ fn main() {
   graphics.preload_texture(String::from("Logo"), 
                            String::from("./resources/Textures/Logo.png"));
   
-  graphics.add_model("Lance".to_string(), "./resources/Models/Lance.glb".to_string());
-  graphics.add_model("Chair".to_string(), "./resources/Models/chair-1stattempt.glb".to_string());
-  graphics.add_model("Tower".to_string(), "./resources/Models/Tower.glb".to_string());
+  graphics.add_model("Lance".to_string(), "./windys-modeling-agency/Unfinished/Lance.glb".to_string());
+  graphics.add_model("Chair".to_string(), "./windys-modeling-agency/Unfinished/chair-1stattempt.glb".to_string());
+  graphics.add_model("Tower".to_string(), "./windys-modeling-agency/Unfinished/TowerStart.glb".to_string());
   graphics.add_model("Floor".to_string(), "./resources/Models/Floor/Floor.glb".to_string());
   graphics.add_model("FloorPath".to_string(), "./resources/Models/Floor/FloorPath.glb".to_string());
+  graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
   
   graphics.create_instance_buffer("EntityBuffer".to_string());
   
   graphics.load_shaders();
   graphics.init();
   
-  graphics.set_clear_colour(0.1, 0.1, 0.1, 1.0);
+  graphics.set_clear_colour(0.2, 0.2, 0.2, 1.0);
   
   let mut game: Box<Scene> = Box::new(LoadScreen::new());
   

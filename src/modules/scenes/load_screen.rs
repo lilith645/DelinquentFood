@@ -3,6 +3,7 @@ use maat_graphics::DrawCall;
 use crate::modules::scenes::Scene;
 use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
+use crate::modules::scenes::GameScreen;
 
 use cgmath::Vector2;
 use cgmath::Vector4;
@@ -40,7 +41,7 @@ impl Scene for LoadScreen {
   }
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
-    Box::new(MenuScreen::new(window_size))
+    Box::new(GameScreen::new(window_size))
   }
   
   fn update(&mut self, delta_time: f32) {
@@ -67,6 +68,7 @@ impl Scene for LoadScreen {
       draw_calls.push(DrawCall::load_model("Chair".to_string()));
       draw_calls.push(DrawCall::load_model("Floor".to_string()));
       draw_calls.push(DrawCall::load_model("FloorPath".to_string()));
+      draw_calls.push(DrawCall::load_model("Strawberry".to_string()));
     }
     
     draw_calls.push(DrawCall::set_texture_scale(1.0));

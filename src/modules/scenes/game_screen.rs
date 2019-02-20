@@ -6,6 +6,8 @@ use crate::modules::scenes::Scene;
 use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
+use crate::modules::food::Food;
+
 use crate::modules::update::update_game;
 use crate::modules::physics::collisions;
 use crate::modules::maploader::Map;
@@ -28,6 +30,7 @@ pub struct GameScreen {
   last_mouse_pos: Vector2<f32>,
   total_delta: f32,
   map: Map,
+  foods: Vec<Food>,
 }
 
 impl GameScreen {
@@ -38,6 +41,13 @@ impl GameScreen {
     camera.set_position(Vector3::new(-15.0, 30.0, 0.0));
     camera.set_pitch(-60.0);
     
+    let map = Map::new();
+    
+    let tile_pos = map.get_next_tile(0) as usize;
+    let square_pos = map.get_tile_position(tile_pos);
+    
+    let start_pos = Vector3::new(square_pos.x as f32, 0.0, square_pos.y as f32);
+    
     GameScreen {
       data: SceneData::new(window_size),
       zoom: 1.0, // 0.5 to 2.0
@@ -47,11 +57,15 @@ impl GameScreen {
       rng: thread_rng(),
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
-      map: Map::new(),
+      map,
+      foods: vec!(Food::new(start_pos, "Strawberry".to_string())),
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>) -> GameScreen {
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, foods: Vec<Food>) -> GameScreen {
+    
+    let map = Map::new();
+    
     GameScreen {
       data: SceneData::new(window_size),
       zoom: 1.0, // 0.5 to 2.0
@@ -61,7 +75,8 @@ impl GameScreen {
       rng,
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
-      map: Map::new(),
+      map,
+      foods,
     }
   }
   
@@ -124,7 +139,7 @@ impl Scene for GameScreen {
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
     if self.data().window_resized {
-      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset))
+      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.foods.clone()))
     } else {
       Box::new(MenuScreen::new(window_size))
     }
@@ -196,7 +211,7 @@ impl Scene for GameScreen {
     
     for i in 0..delta_steps {
      // println!("Update is happening: {}", self.total_delta);
-      update_game(DELTA_STEP);
+      update_game(&self.map, &mut self.foods, DELTA_STEP);
       collisions(DELTA_STEP);
       
       self.total_delta -= DELTA_STEP;
@@ -216,9 +231,12 @@ impl Scene for GameScreen {
     
     self.map.draw(draw_calls);
     
-    draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 1.2, -0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(-90.0, 0.0, 0.0), "Lance".to_string()));
+    draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 1.2, -0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Lance".to_string()));
     draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 5.0, -7.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
     draw_calls.push(DrawCall::draw_model(Vector3::new(5.0, 1.8, -5.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Tower".to_string()));
     
+    for food in &self.foods {
+      food.draw(draw_calls);
+    }
   }
 }

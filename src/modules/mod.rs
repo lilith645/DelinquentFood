@@ -3,3 +3,4 @@ pub mod scenes;
 pub mod physics;
 pub mod update;
 pub mod maploader;
+pub mod food;
