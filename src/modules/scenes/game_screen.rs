@@ -21,7 +21,7 @@ use rand::{thread_rng};
 use cgmath::{Vector2, Vector3};
 
 const DEFAULT_ZOOM: f32 = 1.0;
-const DELTA_STEP: f32 = 0.1;
+const DELTA_STEP: f32 = 0.01;
 
 pub struct GameScreen {
   data: SceneData,
@@ -52,7 +52,7 @@ impl GameScreen {
     
     let start_pos = Vector3::new(square_pos.x as f32, 0.0, square_pos.y as f32);
     
-    let position = map.get_tile_position(9, 9);
+    let position = map.get_tile_position(3, 3);
     let fridge = Box::new(Dishwasher::new(Vector3::new(position.x, 0.0, position.y), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0)));
     
     GameScreen {
@@ -220,7 +220,7 @@ impl Scene for GameScreen {
     
     for i in 0..delta_steps {
      // println!("Update is happening: {}", self.total_delta);
-      update_game(&self.map, &mut self.foods, DELTA_STEP);
+      update_game(&self.map, &mut self.towers, &mut self.foods, DELTA_STEP);
       collisions(DELTA_STEP);
       
       self.total_delta -= DELTA_STEP;

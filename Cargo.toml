@@ -7,6 +7,9 @@ edition = "2018"
 [dependencies]
 maat_graphics = { path = "../Maat-Graphics/" }
 maat_input_handler = { path = "./Maat-InputHandler/" }
-cgmath = "0.16.1"
 winit = "0.18.0"
 rand = "0.6"
+
+[dependencies.cgmath]
+version = "0.17.0"
+features = ["swizzle"]

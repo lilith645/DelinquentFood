@@ -11,6 +11,7 @@ pub struct Dishwasher {
   rotation: Vector3<f32>,
   model: String,
   fire_rate: f32,
+  range: u32,
 }
 
 impl Dishwasher {
@@ -21,14 +22,15 @@ impl Dishwasher {
       rotation,
       model: "Dishwasher".to_string(),
       fire_rate: 1.0,
+      range: 3,
     }
   }
 }
 
 
 impl Tower for Dishwasher {
-  fn update(&self, delta_time: f32) {
-    
+  fn update(&mut self, delta_time: f32) {
+    self.rotation.y += 60.0*delta_time;
   }
   
   fn fire(&mut self) {

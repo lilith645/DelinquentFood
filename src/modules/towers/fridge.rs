@@ -11,6 +11,7 @@ pub struct Fridge {
   rotation: Vector3<f32>,
   model: String,
   fire_rate: f32,
+  range: u32,
 }
 
 impl Fridge {
@@ -21,12 +22,13 @@ impl Fridge {
       rotation,
       model: "Fridge".to_string(),
       fire_rate: 1.0,
+      range: 1,
     }
   }
 }
 
 impl Tower for Fridge {
-  fn update(&self, delta_time: f32) {
+  fn update(&mut self, delta_time: f32) {
     
   }
   

@@ -19,7 +19,7 @@ impl Clone for Box<Tower> {
 }
 
 pub trait Tower: TowerClone {
-  fn update(&self, delta_time: f32);
+  fn update(&mut self, delta_time: f32);
   
   fn fire(&mut self);
   
