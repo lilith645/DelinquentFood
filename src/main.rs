@@ -70,6 +70,12 @@ fn main() {
   graphics.add_model("Tower".to_string(), "./windys-modeling-agency/Unfinished/TowerStart.glb".to_string());
   graphics.add_model("Floor".to_string(), "./resources/Models/Floor/Floor.glb".to_string());
   graphics.add_model("FloorPath".to_string(), "./resources/Models/Floor/FloorPath.glb".to_string());
+  
+  // Towers
+  graphics.add_model("Fridge".to_string(), "./windys-modeling-agency/Unfinished/Fridge.glb".to_string());
+  graphics.add_model("Dishwasher".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
+  
+  // Enemies
   graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
   
   graphics.create_instance_buffer("EntityBuffer".to_string());

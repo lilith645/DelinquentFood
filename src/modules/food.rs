@@ -28,8 +28,8 @@ impl Food {
     self.speed += delta_time;
     
     if self.speed > 0.5 {
-      self.tile_number = map.get_next_tile(self.tile_number);
-      let map_pos = map.get_tile_position(self.tile_number as usize);
+      self.tile_number = map.get_next_path(self.tile_number);
+      let map_pos = map.get_path_position(self.tile_number as usize);
       self.position.x = map_pos.x;
       self.position.z = map_pos.y;
       self.speed = 0.0;

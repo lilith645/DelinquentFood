@@ -7,6 +7,9 @@ use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
 use crate::modules::food::Food;
+use crate::modules::towers::Fridge;
+use crate::modules::towers::Dishwasher;
+use crate::modules::towers::traits::Tower;
 
 use crate::modules::update::update_game;
 use crate::modules::physics::collisions;
@@ -30,6 +33,7 @@ pub struct GameScreen {
   last_mouse_pos: Vector2<f32>,
   total_delta: f32,
   map: Map,
+  towers: Vec<Box<Tower>>,
   foods: Vec<Food>,
 }
 
@@ -43,10 +47,13 @@ impl GameScreen {
     
     let map = Map::new();
     
-    let tile_pos = map.get_next_tile(0) as usize;
-    let square_pos = map.get_tile_position(tile_pos);
+    let tile_pos = map.get_next_path(0) as usize;
+    let square_pos = map.get_path_position(tile_pos);
     
     let start_pos = Vector3::new(square_pos.x as f32, 0.0, square_pos.y as f32);
+    
+    let position = map.get_tile_position(9, 9);
+    let fridge = Box::new(Dishwasher::new(Vector3::new(position.x, 0.0, position.y), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0)));
     
     GameScreen {
       data: SceneData::new(window_size),
@@ -58,11 +65,12 @@ impl GameScreen {
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
       map,
+      towers: vec!(fridge),
       foods: vec!(Food::new(start_pos, "Strawberry".to_string())),
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, foods: Vec<Food>) -> GameScreen {
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, towers: Vec<Box<Tower>>, foods: Vec<Food>) -> GameScreen {
     
     let map = Map::new();
     
@@ -76,6 +84,7 @@ impl GameScreen {
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
       map,
+      towers,
       foods,
     }
   }
@@ -139,7 +148,7 @@ impl Scene for GameScreen {
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
     if self.data().window_resized {
-      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.foods.clone()))
+      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.towers.clone(), self.foods.clone()))
     } else {
       Box::new(MenuScreen::new(window_size))
     }
@@ -237,6 +246,10 @@ impl Scene for GameScreen {
     
     for food in &self.foods {
       food.draw(draw_calls);
+    }
+    
+    for tower in &self.towers {
+      tower.draw(draw_calls);
     }
   }
 }

@@ -69,6 +69,8 @@ impl Scene for LoadScreen {
       draw_calls.push(DrawCall::load_model("Floor".to_string()));
       draw_calls.push(DrawCall::load_model("FloorPath".to_string()));
       draw_calls.push(DrawCall::load_model("Strawberry".to_string()));
+      draw_calls.push(DrawCall::load_model("Fridge".to_string()));
+      draw_calls.push(DrawCall::load_model("Dishwasher".to_string()));
     }
     
     draw_calls.push(DrawCall::set_texture_scale(1.0));

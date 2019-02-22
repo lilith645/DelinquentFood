@@ -76,12 +76,17 @@ impl Map {
     }
   }
   
-  pub fn get_tile_position(&self, tile: usize) -> Vector2<f32> {
-    Vector2::new(-(self.size.x as f32*3.5) + (self.size.x as f32*((self.path[self.order[tile] as usize-1].x) as f32-1.0)),
-                 -(self.size.y as f32*3.5) + (self.size.y as f32*((self.path[self.order[tile] as usize-1].y) as f32-1.0)))
+  pub fn get_tile_position(&self, x: u32, y: u32) -> Vector2<f32> {
+    Vector2::new(-(self.size.x as f32*2.8) + (self.size.x as f32*0.8*((x) as f32-1.0)),
+                 -(self.size.y as f32*2.8) + (self.size.y as f32*0.8*((y) as f32-1.0)))
   }
   
-  pub fn get_next_tile(&self, tile: u32) -> u32 {
+  pub fn get_path_position(&self, tile: usize) -> Vector2<f32> {
+    Vector2::new(-(self.size.x as f32*2.8) + (self.size.x as f32*0.8*((self.path[self.order[tile] as usize-1].x) as f32-1.0)),
+                 -(self.size.y as f32*2.8) + (self.size.y as f32*0.8*((self.path[self.order[tile] as usize-1].y) as f32-1.0)))
+  }
+  
+  pub fn get_next_path(&self, tile: u32) -> u32 {
     if self.order.len()-2 < tile as usize {
       for i in 0..self.order.len() {
         if self.order[i] == 1 {
@@ -100,9 +105,9 @@ impl Map {
     
     
     for pos in self.path.iter() {
-      draw_calls.push(DrawCall::draw_model(Vector3::new(-(self.size.x as f32*3.5) + (self.size.x as f32*(pos.x as f32-1.0)), 
+      draw_calls.push(DrawCall::draw_model(Vector3::new(-(self.size.x as f32*2.8) + (self.size.x as f32*0.8*(pos.x as f32-1.0)),
                                                         0.1, 
-                                                        -(self.size.y as f32*3.5) + (self.size.y as f32*(pos.y as f32-1.0))), 
+                                                        -(self.size.y as f32*2.8) + (self.size.y as f32*0.8*(pos.y as f32-1.0))), 
                                            Vector3::new(self.size.x as f32*0.1, 1.0, self.size.y as f32*0.1), 
                                            Vector3::new(0.0, 0.0, 0.0), 
                                            "FloorPath".to_string()));
