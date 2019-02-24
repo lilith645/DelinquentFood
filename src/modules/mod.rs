@@ -5,3 +5,4 @@ pub mod update;
 pub mod maploader;
 pub mod food;
 pub mod towers;
+pub mod hexagon;

@@ -9,6 +9,6 @@ pub fn update_game(map: &Map, towers: &mut Vec<Box<Tower>>, foods: &mut Vec<Food
   }
   
   for tower in &mut towers.iter_mut() {
-    tower.update(delta_time);
+    tower.update(foods, delta_time);
   }
 }

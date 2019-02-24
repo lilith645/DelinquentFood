@@ -71,6 +71,12 @@ fn main() {
   graphics.add_model("Floor".to_string(), "./resources/Models/Floor/Floor.glb".to_string());
   graphics.add_model("FloorPath".to_string(), "./resources/Models/Floor/FloorPath.glb".to_string());
   
+  graphics.add_model("Hexagon".to_string(), "./windys-modeling-agency/Unfinished/hexagon.glb".to_string());
+  graphics.add_model("BlueHexagon".to_string(), "./windys-modeling-agency/Unfinished/Bluehexagon.glb".to_string());
+  graphics.add_model("GreenHexagon".to_string(), "./windys-modeling-agency/Unfinished/GreenHexagon.glb".to_string());
+  graphics.add_model("PurpleHexagon".to_string(), "./windys-modeling-agency/Unfinished/PurpleHexagon.glb".to_string());
+  graphics.add_model("RedHexagon".to_string(), "./windys-modeling-agency/Unfinished/RedHexagon.glb".to_string());
+  
   // Towers
   graphics.add_model("Fridge".to_string(), "./windys-modeling-agency/Unfinished/Fridge.glb".to_string());
   graphics.add_model("Dishwasher".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());

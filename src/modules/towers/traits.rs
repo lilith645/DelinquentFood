@@ -1,4 +1,5 @@
 use maat_graphics::DrawCall;
+use crate::modules::food::Food;
 
 use cgmath::{Vector2, Vector3};
 
@@ -19,7 +20,7 @@ impl Clone for Box<Tower> {
 }
 
 pub trait Tower: TowerClone {
-  fn update(&mut self, delta_time: f32);
+  fn update(&mut self, foods: &mut Vec<Food>, delta_time: f32);
   
   fn fire(&mut self);
   
