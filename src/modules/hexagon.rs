@@ -114,7 +114,7 @@ impl Layout {
       came_from.push(None);
     }
     
-    let mut frontier = Vec::new();//hexagons.clone();
+    let mut frontier = Vec::new();
     frontier.push(start_idx);
     
     while frontier.len() != 0 {
@@ -145,25 +145,17 @@ impl Layout {
     let mut path = Vec::new();
     while current != start_idx {
       path.push(current as u32);
-      hexagons[current].highlight();
-      println!("current: {}", current);
       current = came_from[current].unwrap();
     }
     path.push(start_idx as u32);
     path.reverse();
-    /*
-    for i in 0..came_from.len() {
-      if let Some(idx) = came_from[i] {
-        hexagons[i].set_next_hex(idx as u32);
-      }
-    }*/
     
     path
   }
   
   pub fn pixel_to_hex(&self, pixel: Vector2<f32>) -> Hexagon {
-    let pt = Vector2::new(pixel.x - self.origin.x / self.size.x,
-                          pixel.y - self.origin.y / self.size.y);
+    let pt = Vector2::new((pixel.x - self.origin.x) / self.size.x,
+                          (pixel.y - self.origin.y) / self.size.y);
     
     let q = B0 * pt.x + B1 * pt.y;
     let r = B2 * pt.x + B3 * pt.y;

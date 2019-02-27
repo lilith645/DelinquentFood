@@ -38,6 +38,7 @@ pub struct GameScreen {
   map: Map,
   towers: Vec<Box<Tower>>,
   foods: Vec<Food>,
+  ray_position: Vector2<f32>,
 }
 
 impl GameScreen {
@@ -99,6 +100,7 @@ impl GameScreen {
       map,
       towers: vec!(fridge),
       foods: vec!(Food::new(Vector3::new(food_pos.x, 0.0, food_pos.y), "Strawberry".to_string(), path, tile_loc)),
+      ray_position: Vector2::new(0.0, 0.0),
     }
   }
   
@@ -116,6 +118,7 @@ impl GameScreen {
       map,
       towers,
       foods,
+      ray_position: Vector2::new(0.0, 0.0),
     }
   }
   
@@ -235,30 +238,45 @@ impl Scene for GameScreen {
       
       self.map.highlight_hex(clicked_hex);*/
       let mut temp_camera = self.camera.clone();
-      let mut position = self.camera.get_position();
       
       if mouse.y > self.data().window_dim.y*0.5 {
-        position.y += mouse.y - self.data().window_dim.y*0.5;
+        let speed = mouse.y - self.data().window_dim.y*0.5;
+        temp_camera.set_move_speed(speed*0.25);
+        temp_camera.process_movement(camera::Direction::Down, 1.0);
+        //position.z += mouse.y - self.data().window_dim.y*0.5;
       } else if mouse.y < self.data().window_dim.y*0.5 {
-        position.y -= self.data().window_dim.y*0.5-mouse.y;
+        //position.z -= self.data().window_dim.y*0.5-mouse.y;
+        let speed = self.data().window_dim.y*0.5-mouse.y;
+        temp_camera.set_move_speed(speed*0.25);
+        temp_camera.process_movement(camera::Direction::Up, 1.0);
       }
       
-      if mouse.x > self.data().window_dim.x*0.5 {
-        position.x += mouse.x - self.data().window_dim.x*0.5;
+      if mouse.x > self.data().window_dim.x*0.25 {
+        // position.x += mouse.x - self.data().window_dim.x*0.5;
+        let speed = mouse.x - self.data().window_dim.x*0.5;
+        temp_camera.set_move_speed(speed*0.25);
+        temp_camera.process_movement(camera::Direction::Right, 1.0);
       } else if mouse.x < self.data().window_dim.x*0.5 {
-        position.x -= self.data().window_dim.x*0.5-mouse.x;
+        //position.x -= self.data().window_dim.x*0.5-mouse.x;
+        let speed = self.data().window_dim.x*0.5-mouse.x;
+        temp_camera.set_move_speed(speed*0.25);
+        temp_camera.process_movement(camera::Direction::Left, 1.0);
       }
       
       let front = temp_camera.get_front();
+      let mut position = temp_camera.get_position();
       
       while position.y > 0.0 {
         position += front;
       }
       
+      let r = self.map.get_radius();
+      
       let pix_x = position.x;
       let pix_y = position.z;
+      self.ray_position = Vector2::new(pix_x, pix_y);
       let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
-      
+      println!("{} {}", clicked_hex.q(), clicked_hex.r());
       self.map.highlight_hex(clicked_hex);
       
       println!("Pixel location: {}, {}", pix_x, pix_y);
@@ -341,5 +359,8 @@ impl Scene for GameScreen {
     }
     
     self.map.draw(draw_calls);
+    
+    
+    draw_calls.push(DrawCall::draw_model(Vector3::new(self.ray_position.x, 0.0, self.ray_position.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
   }
 }
