@@ -13,6 +13,16 @@ const B1: f32 = -1.0 / 3.0;
 const B2: f32 = 0.0;
 const B3: f32 = 2.0 / 3.0;
 
+#[derive(Clone, PartialEq)]
+enum HexagonType {
+  Start,
+  End,
+  Path,
+  Open,
+  Closed,
+}
+
+#[derive(Clone)]
 pub enum HexDirection {
   NorthEast,
   East,
@@ -22,9 +32,36 @@ pub enum HexDirection {
   NorthWest
 }
 
+impl HexDirection {
+  pub fn opposite(&self) -> HexDirection {
+    match self {
+      HexDirection::NorthEast => {
+        HexDirection::SouthWest
+      },
+      HexDirection::East => {
+        HexDirection::West
+      },
+      HexDirection::SouthEast => {
+        HexDirection::NorthWest
+      },
+      HexDirection::SouthWest => {
+        HexDirection::NorthEast
+      },
+      HexDirection::West => {
+        HexDirection::East
+      },
+      HexDirection::NorthWest => {
+        HexDirection::SouthEast
+      }
+    }
+  }
+}
+
+#[derive(Clone)]
 pub struct Layout {
   origin: Vector2<f32>,
   size: Vector2<f32>,
+  path: Vec<Vector2<f32>>,
 }
 
 impl Layout {
@@ -32,7 +69,106 @@ impl Layout {
     Layout {
       origin,
       size,
+      path: Vec::new(),
     }
+  }
+  
+  fn round_to_nearest_hex(q: f32, r: f32) -> Hexagon {
+    let s = -q-r;
+    
+    let mut rnd_r = r.round();
+    let mut rnd_q = q.round();
+    let mut rnd_s = s.round();
+    
+    let r_diff = (rnd_r - r).abs();
+    let q_diff = (rnd_q - q).abs();
+    let s_diff = (rnd_s - s).abs();
+    
+    if r_diff > q_diff && r_diff > s_diff {
+      rnd_r = -rnd_q-rnd_s;
+    } else if q_diff > s_diff {
+      rnd_q = -rnd_r-rnd_s;
+    } else {
+      rnd_s = -rnd_r-rnd_q;
+    }
+    
+    Hexagon::new(rnd_q as i32, rnd_r as i32, "".to_string())
+  }
+  
+  pub fn calculate_path(hexagons: &mut Vec<Hexagon>) -> Vec<u32> {
+    let mut start_idx = 0;
+    let mut end_idx = 0;
+    
+    for i in 0..hexagons.len() {
+      if hexagons[i].is_start() {
+        start_idx = i;
+      }
+      
+      if hexagons[i].is_end() {
+        end_idx = i;
+      }
+    }
+    
+    let mut came_from = Vec::with_capacity(hexagons.len());
+    for _ in 0..hexagons.len() {
+      came_from.push(None);
+    }
+    
+    let mut frontier = Vec::new();//hexagons.clone();
+    frontier.push(start_idx);
+    
+    while frontier.len() != 0 {
+      let current = frontier.remove(0);
+      
+      for next in &Hexagon::all_neigbors(hexagons[current].clone()) {
+        let mut next_idx: i32 = -1;
+        for i in 0..hexagons.len() {
+          if Hexagon::hex_equals(next.clone(), hexagons[i].clone()) {
+            if hexagons[i].is_path() {
+              next_idx = i as i32;
+            }
+          }
+        }
+        
+        if next_idx == -1 {
+          continue;
+        }
+        
+        if came_from[next_idx as usize].is_none() {
+          frontier.push(next_idx as usize);
+          came_from[next_idx as usize] = Some(current);
+        }
+      }
+    }
+    
+    let mut current = end_idx;
+    let mut path = Vec::new();
+    while current != start_idx {
+      path.push(current as u32);
+      hexagons[current].highlight();
+      println!("current: {}", current);
+      current = came_from[current].unwrap();
+    }
+    path.push(start_idx as u32);
+    path.reverse();
+    /*
+    for i in 0..came_from.len() {
+      if let Some(idx) = came_from[i] {
+        hexagons[i].set_next_hex(idx as u32);
+      }
+    }*/
+    
+    path
+  }
+  
+  pub fn pixel_to_hex(&self, pixel: Vector2<f32>) -> Hexagon {
+    let pt = Vector2::new(pixel.x - self.origin.x / self.size.x,
+                          pixel.y - self.origin.y / self.size.y);
+    
+    let q = B0 * pt.x + B1 * pt.y;
+    let r = B2 * pt.x + B3 * pt.y;
+    
+    Layout::round_to_nearest_hex(q, r)
   }
   
   pub fn hex_to_pixel(&self, hexagon: Hexagon) -> Vector2<f32> {
@@ -65,6 +201,7 @@ impl Layout {
 pub struct Hexagon {
   position: Vector3<i32>,
   model: String,
+  hex_type: HexagonType,
 }
 
 impl Hexagon {
@@ -72,7 +209,20 @@ impl Hexagon {
     Hexagon {
       position: Vector3::new(q, r, -q-r),
       model,
+      hex_type: HexagonType::Open,
     }
+  }
+  
+  pub fn is_path(&self) -> bool {
+    self.hex_type == HexagonType::Path || self.is_start() || self.is_end()
+  }
+  
+  pub fn is_start(&self) -> bool {
+    self.hex_type == HexagonType::Start
+  }
+  
+  pub fn is_end(&self) -> bool {
+    self.hex_type == HexagonType::End
   }
   
   pub fn plain(&mut self) {
@@ -83,8 +233,19 @@ impl Hexagon {
     self.model = "BlueHexagon".to_string();
   }
   
+  pub fn set_as_start(&mut self) {
+    self.model = "RedHexagon".to_string();
+    self.hex_type = HexagonType::Start;
+  }
+  
+  pub fn set_as_end(&mut self) {
+    self.model = "PurpleHexagon".to_string();
+    self.hex_type = HexagonType::End;
+  }
+  
   pub fn set_as_path(&mut self) {
     self.model = "GreenHexagon".to_string();
+    self.hex_type = HexagonType::Path;
   }
   
   pub fn get_model(&self) -> String {
@@ -136,6 +297,19 @@ impl Hexagon {
   
   pub fn hex_neigbor(hexagon: Hexagon, direction: HexDirection) -> Hexagon {
     Hexagon::hex_add(hexagon, Hexagon::hex_direction(direction))
+  }
+  
+  pub fn all_neigbors(hexagon: Hexagon) -> Vec<Hexagon> {
+    let mut neigbors = Vec::with_capacity(6);
+    
+    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::NorthEast));
+    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::East));
+    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::SouthEast));
+    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::SouthWest));
+    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::West));
+    neigbors.push(Hexagon::hex_neigbor(hexagon, HexDirection::NorthWest));
+    
+    neigbors
   }
   
   pub fn hex_add(hexagon: Hexagon, other_hexagon: Hexagon) -> Hexagon {

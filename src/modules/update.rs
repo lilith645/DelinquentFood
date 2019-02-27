@@ -1,7 +1,7 @@
 use crate::modules::food::Food;
 use crate::modules::towers::traits::Tower;
 
-use crate::modules::maploader::Map;
+use crate::modules::map::Map;
 
 pub fn update_game(map: &Map, towers: &mut Vec<Box<Tower>>, foods: &mut Vec<Food>, delta_time: f32) {
   for food in &mut foods.iter_mut() {

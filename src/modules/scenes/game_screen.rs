@@ -16,12 +16,12 @@ use crate::modules::towers::traits::Tower;
 
 use crate::modules::update::update_game;
 use crate::modules::physics::collisions;
-use crate::modules::maploader::Map;
+use crate::modules::map::Map;
 
 use rand;
 use rand::{thread_rng};
 
-use cgmath::{Vector2, Vector3};
+use cgmath::{Rad, Deg, PerspectiveFov, SquareMatrix, Matrix4, Vector2, Vector3, Vector4, Point3};
 
 const DEFAULT_ZOOM: f32 = 1.0;
 const DELTA_STEP: f32 = 0.01;
@@ -38,7 +38,6 @@ pub struct GameScreen {
   map: Map,
   towers: Vec<Box<Tower>>,
   foods: Vec<Food>,
-  hexs: Vec<Hexagon>,
 }
 
 impl GameScreen {
@@ -60,6 +59,8 @@ impl GameScreen {
    // let position = map.get_tile_position(3, 3);
     let fridge = Box::new(Dishwasher::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), Vector2::new(3,3)));
     
+    /*
+    // Ranges
     let mut hexagons: Vec<Hexagon> = Vec::new();
     
     let radius = 8;
@@ -80,7 +81,11 @@ impl GameScreen {
         
         hexagons.push(Hexagon::new(q, r, texture.to_string()));
       }
-    }
+    }*/
+    
+    let mut path = map.get_path();
+    let food_pos = map.tile_position_from_index(path[0] as usize);
+    let tile_loc = map.get_qr_from_index(path[0] as usize);
     
     GameScreen {
       data: SceneData::new(window_size),
@@ -93,14 +98,11 @@ impl GameScreen {
       total_delta: 0.0,
       map,
       towers: vec!(fridge),
-      foods: vec!(Food::new(Vector3::new(0.0, 0.0, 0.0), "Strawberry".to_string())),
-      hexs: hexagons,
+      foods: vec!(Food::new(Vector3::new(food_pos.x, 0.0, food_pos.y), "Strawberry".to_string(), path, tile_loc)),
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, towers: Vec<Box<Tower>>, foods: Vec<Food>, hexagons: Vec<Hexagon>) -> GameScreen {
-    
-    let map = Map::new();
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, towers: Vec<Box<Tower>>, foods: Vec<Food>, map: Map) -> GameScreen {
     
     GameScreen {
       data: SceneData::new(window_size),
@@ -114,7 +116,6 @@ impl GameScreen {
       map,
       towers,
       foods,
-      hexs: hexagons,
     }
   }
   
@@ -177,7 +178,7 @@ impl Scene for GameScreen {
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
     if self.data().window_resized {
-      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.towers.clone(), self.foods.clone(), self.hexs.clone()))
+      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.towers.clone(), self.foods.clone(), self.map.clone()))
     } else {
       Box::new(MenuScreen::new(window_size))
     }
@@ -201,6 +202,67 @@ impl Scene for GameScreen {
     let mut d_pressed = self.data().keys.d_pressed();
     let mut r_pressed = self.data().keys.r_pressed();
     let mut f_pressed = self.data().keys.f_pressed();
+    
+    if left_clicked {
+   /*   let fov = 60.0;
+      let aspect = self.data().window_dim.x / self.data().window_dim.y;
+      let near = 0.1;
+      let far = 256.0;
+     // let f = (math::to_radians(fov) / 2.0).cot();
+      let perspective = PerspectiveFov {
+        fovy: Deg(fov).into(),
+        aspect,
+        near,
+        far,
+      };
+      let perspective = perspective.to_perspective();
+      
+      let (c_pos, c_center, c_up) = self.camera.get_look_at();
+      
+      let view = Matrix4::look_at(Point3::new(c_pos.x, c_pos.y, c_pos.z), 
+                                  Point3::new(c_center.x, c_center.y, c_center.z), c_up);
+      
+      let invt_view = view.invert().unwrap();
+      let invt_perspective = Matrix4::from(perspective).invert().unwrap();
+      
+      let position = self.camera.get_position();
+      let position = Vector4::new(position.x, position.y, position.z, 1.0);
+      let pos = invt_perspective * invt_view * position;
+      println!("Position: {:?}", pos);
+      let pix_x = position.x;
+      let pix_y = position.y;
+      let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+      
+      self.map.highlight_hex(clicked_hex);*/
+      let mut temp_camera = self.camera.clone();
+      let mut position = self.camera.get_position();
+      
+      if mouse.y > self.data().window_dim.y*0.5 {
+        position.y += mouse.y - self.data().window_dim.y*0.5;
+      } else if mouse.y < self.data().window_dim.y*0.5 {
+        position.y -= self.data().window_dim.y*0.5-mouse.y;
+      }
+      
+      if mouse.x > self.data().window_dim.x*0.5 {
+        position.x += mouse.x - self.data().window_dim.x*0.5;
+      } else if mouse.x < self.data().window_dim.x*0.5 {
+        position.x -= self.data().window_dim.x*0.5-mouse.x;
+      }
+      
+      let front = temp_camera.get_front();
+      
+      while position.y > 0.0 {
+        position += front;
+      }
+      
+      let pix_x = position.x;
+      let pix_y = position.z;
+      let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+      
+      self.map.highlight_hex(clicked_hex);
+      
+      println!("Pixel location: {}, {}", pix_x, pix_y);
+    }
     
     if self.data().window_resized {
       self.mut_data().next_scene = true;
@@ -267,9 +329,8 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::lerp_ortho_camera_to_size(self.data.window_dim*self.zoom, Vector2::new(0.05, 0.05)));
     draw_calls.push(DrawCall::set_camera(self.camera.clone()));
     
-    draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 1.2, -0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Lance".to_string()));
-    draw_calls.push(DrawCall::draw_model(Vector3::new(-4.0, 5.0, -7.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
-    draw_calls.push(DrawCall::draw_model(Vector3::new(5.0, 1.8, -5.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), "Tower".to_string()));
+    let pos = self.map.get_tile_position(0, -1);
+    draw_calls.push(DrawCall::draw_model(Vector3::new(pos.x, 3.6, pos.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Tower".to_string()));
     
     for food in &self.foods {
       food.draw(draw_calls);
@@ -280,19 +341,5 @@ impl Scene for GameScreen {
     }
     
     self.map.draw(draw_calls);
-    /*
-    let size = Vector2::new(8.0, 8.0);
-    
-    let layout = Layout::new(Vector2::new(0.0, 0.0), size);
-    
-    for hexagon in &self.hexs {
-      let location = layout.hex_to_pixel(hexagon.clone());
-      
-      let position = Vector3::new(location.x, 0.1, location.y);
-      draw_calls.push(DrawCall::draw_model(position,
-                                           Vector3::new(size.x/4.0, 0.1, size.y/4.0),
-                                           Vector3::new(0.0, 90.0, 0.0), 
-                                           hexagon.get_model()));
-    }*/
   }
 }

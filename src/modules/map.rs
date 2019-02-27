@@ -9,8 +9,11 @@ use maat_graphics::DrawCall;
 
 use cgmath::{Vector2, Vector3};
 
+#[derive(Clone)]
 pub struct Map {
   radius: i32,
+  layout: Layout,
+  path: Vec<u32>,
   map: Vec<Hexagon>,
 }
 
@@ -82,7 +85,7 @@ impl Map {
         
         r += 1;*/
         
-        println!("");
+       // println!("");
         /*
         if tiles_info_next {
           num_tiles = v[2].parse::<u32>().unwrap();
@@ -111,7 +114,7 @@ impl Map {
     
     for j in 0..hexagons.len() {
       if Hexagon::hex_equals(hexagons[j].clone(), Hexagon::new(6, -8, "".to_string())) {
-        hexagons[j].set_as_path();
+        hexagons[j].set_as_start();
       }
       if Hexagon::hex_equals(hexagons[j].clone(), Hexagon::new(6, -7, "".to_string())) {
         hexagons[j].set_as_path();
@@ -303,58 +306,59 @@ impl Map {
         hexagons[j].set_as_path();
       }
       if Hexagon::hex_equals(hexagons[j].clone(), Hexagon::new(-6, 8, "".to_string())) {
-        hexagons[j].set_as_path();
+        hexagons[j].set_as_end();
       }
     }
     
+    let layout = Layout::new(Vector2::new(0.0, 0.0), Vector2::new(radius as f32, radius as f32));
+    
+    let path = Layout::calculate_path(&mut hexagons);
+    
     Map {
       radius: radius,
+      layout,
+      path,
       map: hexagons,
     }
   }
   
   pub fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
-    let size = Vector2::new(8.0, 8.0);
-    
-    let layout = Layout::new(Vector2::new(0.0, 0.0), size);
-    
     for hexagon in &self.map {
-      let location = layout.hex_to_pixel(hexagon.clone());
+      let location = self.layout.hex_to_pixel(hexagon.clone());
       
       let position = Vector3::new(location.x, 0.1, location.y);
       draw_calls.push(DrawCall::draw_model(position,
-                                           Vector3::new(size.x/4.0, 0.1, size.y/4.0),
+                                           Vector3::new(self.radius as f32/4.0, 0.1, self.radius as f32/4.0),
                                            Vector3::new(0.0, 90.0, 0.0), 
                                            hexagon.get_model()));
     }
   }
   
-  /*
-  pub fn get_tile_position(&self, x: u32, y: u32) -> Vector2<f32> {
-    Vector2::new(-(self.size.x as f32*2.8) + (self.size.x as f32*0.8*((x) as f32-1.0)),
-                 -(self.size.y as f32*2.8) + (self.size.y as f32*0.8*((y) as f32-1.0)))
+  pub fn get_path(&self) -> Vec<u32> {
+    self.path.clone()
   }
   
-  pub fn get_path_position(&self, tile: usize) -> Vector2<f32> {
-    Vector2::new(-(self.size.x as f32*2.8) + (self.size.x as f32*0.8*((self.path[self.order[tile] as usize-1].x) as f32-1.0)),
-                 -(self.size.y as f32*2.8) + (self.size.y as f32*0.8*((self.path[self.order[tile] as usize-1].y) as f32-1.0)))
+  pub fn pixel_to_hex(&self, pix_x: f32, pix_y: f32) -> Hexagon {
+    self.layout.pixel_to_hex(Vector2::new(pix_x, pix_y))
   }
   
-  pub fn get_path_location(&self, tile: usize) -> Vector2<u32> {
-    self.path[self.order[tile] as usize-1]
+  pub fn tile_position_from_index(&self, idx: usize) -> Vector2<f32> {
+    self.layout.hex_to_pixel(self.map[idx].clone())
   }
   
-  pub fn get_next_path(&self, tile: u32) -> u32 {
-    if self.order.len()-2 < tile as usize {
-      for i in 0..self.order.len() {
-        if self.order[i] == 1 {
-          return i as u32;
-        }
+  pub fn get_tile_position(&self, q: i32, r: i32) -> Vector2<f32> {
+    self.layout.hex_to_pixel(Hexagon::new(q, r, "".to_string()))
+  }
+  
+  pub fn get_qr_from_index(&self, idx: usize) -> Vector2<i32> {
+    Vector2::new(self.map[idx].q(), self.map[idx].r())
+  }
+  
+  pub fn highlight_hex(&mut self, light_hex: Hexagon) {
+    for hexagon in &mut self.map {
+      if Hexagon::hex_equals(light_hex.clone(), hexagon.clone()) {
+        hexagon.highlight();
       }
-      
-      return 0
     }
-    
-    tile + 1
-  }*/
+  }
 }
