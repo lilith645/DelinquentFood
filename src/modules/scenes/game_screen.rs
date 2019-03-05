@@ -49,6 +49,7 @@ impl GameScreen {
     camera.set_position(Vector3::new(83.93359, 128.62776, 55.85842));
     camera.set_pitch(-62.27426);
     camera.set_yaw(210.10083);
+    camera.set_move_speed(50.0);
     
     let map = Map::new();
     
@@ -239,27 +240,31 @@ impl Scene for GameScreen {
       self.map.highlight_hex(clicked_hex);*/
       let mut temp_camera = self.camera.clone();
       
-      if mouse.y > self.data().window_dim.y*0.5 {
-        let speed = mouse.y - self.data().window_dim.y*0.5;
-        temp_camera.set_move_speed(speed*0.25);
+      let half_width = self.data().window_dim.x*0.5;
+      let half_height = self.data().window_dim.y*0.5;
+      
+      if mouse.y > half_height {
+        let speed = mouse.y - half_height;
+        temp_camera.set_move_speed(speed*(speed/half_height));
         temp_camera.process_movement(camera::Direction::Down, 1.0);
         //position.z += mouse.y - self.data().window_dim.y*0.5;
-      } else if mouse.y < self.data().window_dim.y*0.5 {
+      } else if mouse.y < half_height {
         //position.z -= self.data().window_dim.y*0.5-mouse.y;
-        let speed = self.data().window_dim.y*0.5-mouse.y;
-        temp_camera.set_move_speed(speed*0.25);
+        let speed = half_height-mouse.y;
+        println!("{} / {} = {}", speed, half_height, speed/half_height);
+        temp_camera.set_move_speed(speed*(speed/half_height));
         temp_camera.process_movement(camera::Direction::Up, 1.0);
       }
       
-      if mouse.x > self.data().window_dim.x*0.25 {
+      if mouse.x > half_width {
         // position.x += mouse.x - self.data().window_dim.x*0.5;
-        let speed = mouse.x - self.data().window_dim.x*0.5;
-        temp_camera.set_move_speed(speed*0.25);
+        let speed = mouse.x - half_width;
+        temp_camera.set_move_speed(speed*(speed/half_width));
         temp_camera.process_movement(camera::Direction::Right, 1.0);
-      } else if mouse.x < self.data().window_dim.x*0.5 {
+      } else if mouse.x < half_width {
         //position.x -= self.data().window_dim.x*0.5-mouse.x;
-        let speed = self.data().window_dim.x*0.5-mouse.x;
-        temp_camera.set_move_speed(speed*0.25);
+        let speed = half_width-mouse.x;
+        temp_camera.set_move_speed(speed*(speed/half_width));
         temp_camera.process_movement(camera::Direction::Left, 1.0);
       }
       
@@ -307,16 +312,16 @@ impl Scene for GameScreen {
     self.last_mouse_pos = mouse;
     
     if w_pressed {
-      self.camera.process_movement(camera::Direction::PositiveX, delta_time);
+      self.camera.process_movement(camera::Direction::YAlignedForward, delta_time);
     }
     if a_pressed {
-      self.camera.process_movement(camera::Direction::PositiveZ, delta_time);
+      self.camera.process_movement(camera::Direction::YAlignedLeft, delta_time);
     }
     if s_pressed {
-      self.camera.process_movement(camera::Direction::NegativeX, delta_time);
+      self.camera.process_movement(camera::Direction::YAlignedBackward, delta_time);
     }
     if d_pressed {
-      self.camera.process_movement(camera::Direction::NegativeZ, delta_time);
+      self.camera.process_movement(camera::Direction::YAlignedRight, delta_time);
     }
     if r_pressed {
       self.camera.process_movement(camera::Direction::PositiveY, delta_time);

@@ -143,8 +143,8 @@ fn main() {
     benchmark(&mut draw_calls, dimensions);
     fps_overlay(&mut draw_calls, dimensions, last_fps, ms);
     
-    graphics.pre_draw();
-    graphics.draw(&draw_calls);
+    let model_details = graphics.pre_draw();
+    graphics.draw(&draw_calls, delta_time as f32);
     graphics.post_draw();
     
     draw_calls.clear();
