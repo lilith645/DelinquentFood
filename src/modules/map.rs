@@ -1,8 +1,7 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader};
 
 use crate::modules::hexagon::Hexagon;
-use crate::modules::hexagon::HexDirection;
 use crate::modules::hexagon::Layout;
 
 use maat_graphics::DrawCall;
@@ -25,9 +24,6 @@ impl Map {
     let mut offset = 1;
     let mut y = 0;
     
-    let mut q = 0;
-    let mut r = 0;
-    
     if let Ok(f) = File::open("./resources/Maps/testmap.ini") {
       println!("Settings file exists");
       let f = BufReader::new(f);
@@ -38,15 +34,13 @@ impl Map {
         if radius == 0 {
           radius = v[0].parse::<i32>().unwrap();
           y = -radius;
-          q = 0;
-          r = -1*radius;
           for q in -radius..radius+1 {
             let r1 = (-radius).max(-q - radius);
             let r2 = radius.min(-q + radius);
             
             for r in r1..r2+1 {
-              let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
-              let mut texture = "Hexagon".to_string();
+             // let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
+              let texture = "Hexagon".to_string();
               
               hexagons.push(Hexagon::new(q, r, texture.to_string()));
             }

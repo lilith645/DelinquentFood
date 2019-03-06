@@ -1,9 +1,8 @@
 use maat_graphics::DrawCall;
-use maat_graphics::math;
 
 use crate::modules::map::Map;
 
-use cgmath::{InnerSpace, Angle, Deg, dot, Vector2, Vector3};
+use cgmath::{InnerSpace, Angle, Deg, Vector2, Vector3};
 
 #[derive(Clone)]
 pub struct Food {

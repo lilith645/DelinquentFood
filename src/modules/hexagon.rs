@@ -1,5 +1,3 @@
-use std::ops::{Add, Sub, Mul};
-
 use cgmath::{Vector2, Vector3};
 
 // Orientation information
@@ -78,7 +76,7 @@ impl Layout {
     
     let mut rnd_r = r.round();
     let mut rnd_q = q.round();
-    let mut rnd_s = s.round();
+    let rnd_s = s.round();
     
     let r_diff = (rnd_r - r).abs();
     let q_diff = (rnd_q - q).abs();
@@ -88,8 +86,6 @@ impl Layout {
       rnd_r = -rnd_q-rnd_s;
     } else if q_diff > s_diff {
       rnd_q = -rnd_r-rnd_s;
-    } else {
-      rnd_s = -rnd_r-rnd_q;
     }
     
     Hexagon::new(rnd_q as i32, rnd_r as i32, "".to_string())

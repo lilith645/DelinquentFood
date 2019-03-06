@@ -41,7 +41,7 @@ impl Scene for LoadScreen {
   }
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
-    Box::new(GameScreen::new(window_size))
+    Box::new(GameScreen::new(window_size, self.data.model_sizes.clone()))
   }
   
   fn update(&mut self, delta_time: f32) {

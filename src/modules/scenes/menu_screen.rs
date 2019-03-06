@@ -6,7 +6,7 @@ use crate::modules::scenes::GameScreen;
 
 use crate::modules::system_interface::MainMenuUserInterface;
 
-use cgmath::Vector2;
+use cgmath::{Vector2, Vector3};
 
 pub struct MenuScreen {
   data: SceneData,
@@ -14,11 +14,11 @@ pub struct MenuScreen {
 }
 
 impl MenuScreen {
-  pub fn new(window_size: Vector2<f32>) -> MenuScreen {
+  pub fn new(window_size: Vector2<f32>, model_sizes: Vec<(String, Vector3<f32>)>) -> MenuScreen {
     println!("Menu Screen");
     
     MenuScreen {
-      data: SceneData::new(window_size),
+      data: SceneData::new(window_size, model_sizes),
       ui: MainMenuUserInterface::new(window_size),
     }
   }
@@ -35,9 +35,9 @@ impl Scene for MenuScreen {
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
     if self.data().window_resized {
-      Box::new(MenuScreen::new(window_size))
+      Box::new(MenuScreen::new(window_size, self.data.model_sizes.clone()))
     } else {
-      Box::new(GameScreen::new(window_size))
+      Box::new(GameScreen::new(window_size, self.data.model_sizes.clone()))
     }
   }
   

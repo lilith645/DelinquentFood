@@ -29,7 +29,7 @@ impl Fridge {
 }
 
 impl Tower for Fridge {
-  fn update(&mut self, foods: &mut Vec<Food>, delta_time: f32) {
+  fn update(&mut self, _foods: &mut Vec<Food>, _model_sizes: &mut Vec<(String, Vector3<f32>)>, _delta_time: f32) {
     
   }
   

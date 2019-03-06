@@ -9,7 +9,7 @@ use winit;
 use winit::MouseScrollDelta::LineDelta;
 use winit::MouseScrollDelta::PixelDelta;
 
-use cgmath::Vector2;
+use cgmath::{Vector2, Vector3};
 
 pub use self::load_screen::LoadScreen;
 pub use self::menu_screen::MenuScreen;
@@ -36,10 +36,11 @@ pub struct SceneData {
   pub keys: MappedKeys,
   pub window_resized: bool,
   pub controller: Controller,
+  pub model_sizes: Vec<(String, Vector3<f32>)>,
 }
 
 impl SceneData {
-  pub fn new(window_size: Vector2<f32>) -> SceneData {
+  pub fn new(window_size: Vector2<f32>, model_sizes: Vec<(String, Vector3<f32>)>) -> SceneData {
     SceneData {
       should_close: false,
       next_scene: false,
@@ -57,6 +58,7 @@ impl SceneData {
       keys: MappedKeys::new(),
       window_resized: false,
       controller: Controller::new(),
+      model_sizes,
     }
   }
   
@@ -78,6 +80,7 @@ impl SceneData {
       keys: MappedKeys::new(),
       window_resized: false,
       controller: Controller::new(),
+      model_sizes: Vec::new(),
     }
   }
   
@@ -115,6 +118,10 @@ pub trait Scene {
   
   fn set_mouse_position(&mut self, mouse_position: Vector2<f32>) {
     self.mut_data().update_mouse_pos(mouse_position);
+  }
+  
+  fn add_model_size(&mut self, reference: String, size: Vector3<f32>) {
+    self.mut_data().model_sizes.push((reference, size));
   }
   
   fn handle_input(&mut self, event: winit::WindowEvent) -> bool {

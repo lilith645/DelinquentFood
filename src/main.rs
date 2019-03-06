@@ -13,7 +13,7 @@ use maat_graphics::graphics::CoreRender;
 use maat_graphics::CoreMaat;
 use maat_graphics::DrawCall;
 
-use cgmath::{Vector2, Vector3, Vector4};
+use cgmath::{Vector2, Vector4};
 
 use std::time;
 
@@ -79,7 +79,7 @@ fn main() {
   
   // Towers
   graphics.add_model("Fridge".to_string(), "./windys-modeling-agency/Unfinished/Fridge.glb".to_string());
-  graphics.add_model("Dishwasher".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
+  graphics.add_model("Dishwasher".to_string(), "./windys-modeling-agency/Unfinished/TowerStart.glb".to_string());
   
   // Enemies
   graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
@@ -150,6 +150,9 @@ fn main() {
     draw_calls.clear();
     
     game.reset_scroll_value();
+    for (reference, size) in &model_details {
+      game.add_model_size(reference.to_string(), *size);
+    }
     
     let mut resized = false;
     

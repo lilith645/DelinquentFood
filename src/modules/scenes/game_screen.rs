@@ -1,16 +1,11 @@
 use maat_graphics::DrawCall;
-use maat_graphics::math;
 use maat_graphics::camera;
 
 use crate::modules::scenes::Scene;
 use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
-use crate::modules::hexagon::Hexagon;
-use crate::modules::hexagon::Layout;
-
 use crate::modules::food::Food;
-use crate::modules::towers::Fridge;
 use crate::modules::towers::Dishwasher;
 use crate::modules::towers::traits::Tower;
 
@@ -21,7 +16,7 @@ use crate::modules::map::Map;
 use rand;
 use rand::{thread_rng};
 
-use cgmath::{Rad, Deg, PerspectiveFov, SquareMatrix, Matrix4, Vector2, Vector3, Vector4, Point3};
+use cgmath::{SquareMatrix, Matrix4, Point3, Deg, Vector2, Vector3, Vector4, PerspectiveFov};
 
 const DEFAULT_ZOOM: f32 = 1.0;
 const DELTA_STEP: f32 = 0.01;
@@ -42,7 +37,7 @@ pub struct GameScreen {
 }
 
 impl GameScreen {
-  pub fn new(window_size: Vector2<f32>) -> GameScreen {
+  pub fn new(window_size: Vector2<f32>, model_sizes: Vec<(String, Vector3<f32>)>) -> GameScreen {
     println!("Game Screen");
     
     let mut camera = camera::Camera::default_vk();
@@ -59,7 +54,7 @@ impl GameScreen {
   //  let start_pos = Vector3::new(square_pos.x as f32, 0.0, square_pos.y as f32);
     
    // let position = map.get_tile_position(3, 3);
-    let fridge = Box::new(Dishwasher::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(1.0, 1.0, 1.0), Vector3::new(0.0, 0.0, 0.0), Vector2::new(3,3)));
+    let dishwasher = Box::new(Dishwasher::new(Vector2::new(2,2), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &map));
     
     /*
     // Ranges
@@ -85,12 +80,12 @@ impl GameScreen {
       }
     }*/
     
-    let mut path = map.get_path();
+    let path = map.get_path();
     let food_pos = map.tile_position_from_index(path[0] as usize);
     let tile_loc = map.get_qr_from_index(path[0] as usize);
     
     GameScreen {
-      data: SceneData::new(window_size),
+      data: SceneData::new(window_size, model_sizes),
       zoom: 1.0, // 0.5 to 2.0
       escaped_pressed_last_frame: false,
       screen_offset: Vector2::new(0.0, 0.0),
@@ -99,16 +94,16 @@ impl GameScreen {
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
       map,
-      towers: vec!(fridge),
+      towers: vec!(dishwasher),
       foods: vec!(Food::new(Vector3::new(food_pos.x, 0.0, food_pos.y), "Strawberry".to_string(), path, tile_loc)),
       ray_position: Vector2::new(0.0, 0.0),
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, towers: Vec<Box<Tower>>, foods: Vec<Food>, map: Map) -> GameScreen {
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, towers: Vec<Box<Tower>>, foods: Vec<Food>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>) -> GameScreen {
     
     GameScreen {
-      data: SceneData::new(window_size),
+      data: SceneData::new(window_size, model_sizes),
       zoom: 1.0, // 0.5 to 2.0
       escaped_pressed_last_frame: false,
       screen_offset,
@@ -182,9 +177,9 @@ impl Scene for GameScreen {
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
     if self.data().window_resized {
-      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.towers.clone(), self.foods.clone(), self.map.clone()))
+      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.towers.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone()))
     } else {
-      Box::new(MenuScreen::new(window_size))
+      Box::new(MenuScreen::new(window_size, self.data.model_sizes.clone()))
     }
   }
   
@@ -198,17 +193,17 @@ impl Scene for GameScreen {
     let _middle_mouse_dragged = self.data().middle_mouse_dragged;
     let _right_mouse_dragged = self.data().right_mouse_dragged;
     let escape_pressed = self.data().keys.escape_pressed();
-    let _scroll_delta = self.data().scroll_delta;
+    let scroll_delta = self.data().scroll_delta;
     let _keys_pressed_this_frame = self.get_keys_pressed_this_frame();
     let mut w_pressed = self.data().keys.w_pressed();
     let mut a_pressed = self.data().keys.a_pressed();
     let mut s_pressed = self.data().keys.s_pressed();
     let mut d_pressed = self.data().keys.d_pressed();
-    let mut r_pressed = self.data().keys.r_pressed();
-    let mut f_pressed = self.data().keys.f_pressed();
+    let r_pressed = self.data().keys.r_pressed();
+    let f_pressed = self.data().keys.f_pressed();
     
     if left_clicked {
-   /*   let fov = 60.0;
+    /*  let fov = 60.0;
       let aspect = self.data().window_dim.x / self.data().window_dim.y;
       let near = 0.1;
       let far = 256.0;
@@ -229,15 +224,23 @@ impl Scene for GameScreen {
       let invt_view = view.invert().unwrap();
       let invt_perspective = Matrix4::from(perspective).invert().unwrap();
       
-      let position = self.camera.get_position();
-      let position = Vector4::new(position.x, position.y, position.z, 1.0);
+      let position = mouse;
+      let mut temp_cam = self.camera.clone();
+      temp_cam.set_move_speed(1.0);
+      temp_cam.process_movement(camera::Direction::Forward, position.y-self.data.window_dim.y*0.5);
+      temp_cam.process_movement(camera::Direction::Right, position.x-self.data.window_dim.x*0.5);
+      
+      let cam_position = temp_cam.get_position();
+      
+      let position = Vector4::new(cam_position.z, cam_position.x, 0.0, 0.5);
       let pos = invt_perspective * invt_view * position;
       println!("Position: {:?}", pos);
       let pix_x = position.x;
       let pix_y = position.y;
       let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
-      
+      self.ray_position = Vector2::new(pix_x, pix_y);
       self.map.highlight_hex(clicked_hex);*/
+      
       let mut temp_camera = self.camera.clone();
       
       let half_width = self.data().window_dim.x*0.5;
@@ -247,9 +250,7 @@ impl Scene for GameScreen {
         let speed = mouse.y - half_height;
         temp_camera.set_move_speed(speed*(speed/half_height));
         temp_camera.process_movement(camera::Direction::Down, 1.0);
-        //position.z += mouse.y - self.data().window_dim.y*0.5;
       } else if mouse.y < half_height {
-        //position.z -= self.data().window_dim.y*0.5-mouse.y;
         let speed = half_height-mouse.y;
         println!("{} / {} = {}", speed, half_height, speed/half_height);
         temp_camera.set_move_speed(speed*(speed/half_height));
@@ -257,12 +258,10 @@ impl Scene for GameScreen {
       }
       
       if mouse.x > half_width {
-        // position.x += mouse.x - self.data().window_dim.x*0.5;
         let speed = mouse.x - half_width;
         temp_camera.set_move_speed(speed*(speed/half_width));
         temp_camera.process_movement(camera::Direction::Right, 1.0);
       } else if mouse.x < half_width {
-        //position.x -= self.data().window_dim.x*0.5-mouse.x;
         let speed = half_width-mouse.x;
         temp_camera.set_move_speed(speed*(speed/half_width));
         temp_camera.process_movement(camera::Direction::Left, 1.0);
@@ -274,8 +273,6 @@ impl Scene for GameScreen {
       while position.y > 0.0 {
         position += front;
       }
-      
-      let r = self.map.get_radius();
       
       let pix_x = position.x;
       let pix_y = position.z;
@@ -294,6 +291,7 @@ impl Scene for GameScreen {
     self.update_keypresses(escape_pressed);
     match self.update_controller_input() {
       (w, a, s, d, x_offset, y_offset) => {
+        // First person setup
         if w { w_pressed = w; }
         if a { a_pressed = a; }
         if s { s_pressed = s; }
@@ -330,11 +328,21 @@ impl Scene for GameScreen {
       self.camera.process_movement(camera::Direction::NegativeY, delta_time);
     }
     
-    let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
+    if scroll_delta > 0.0 {
+      self.camera.process_movement(camera::Direction::Forward, DELTA_STEP);
+    } else if scroll_delta < 0.0 {
+      self.camera.process_movement(camera::Direction::Backward, DELTA_STEP);
+    }
     
-    for i in 0..delta_steps {
+    let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
+    for _ in 0..delta_steps {
      // println!("Update is happening: {}", self.total_delta);
-      update_game(&self.map, &mut self.towers, &mut self.foods, DELTA_STEP);
+     let towers = &mut self.towers;
+     let foods = &mut self.foods;
+     let m_sizes = &mut self.data.model_sizes;
+     let map = &self.map;
+     
+      update_game(map, towers, foods, m_sizes, DELTA_STEP);
       collisions(DELTA_STEP);
       
       self.total_delta -= DELTA_STEP;
@@ -352,9 +360,6 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::lerp_ortho_camera_to_size(self.data.window_dim*self.zoom, Vector2::new(0.05, 0.05)));
     draw_calls.push(DrawCall::set_camera(self.camera.clone()));
     
-    let pos = self.map.get_tile_position(0, -1);
-    draw_calls.push(DrawCall::draw_model(Vector3::new(pos.x, 3.6, pos.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Tower".to_string()));
-    
     for food in &self.foods {
       food.draw(draw_calls);
     }
@@ -364,7 +369,6 @@ impl Scene for GameScreen {
     }
     
     self.map.draw(draw_calls);
-    
     
     draw_calls.push(DrawCall::draw_model(Vector3::new(self.ray_position.x, 0.0, self.ray_position.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
   }
