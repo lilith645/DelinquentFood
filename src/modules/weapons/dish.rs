@@ -12,7 +12,7 @@ pub struct Dish {
 impl Dish {
   pub fn new() -> Dish {
     Dish {
-      data: WeaponData::new(80.0, 1.0, 0, Vector3::new(0.5, 0.5, 0.5), WeaponType::Projectile, "Spoon".to_string()),
+      data: WeaponData::new(80.0, 1, 2, 0, Vector3::new(0.5, 0.5, 0.5), WeaponType::Projectile, "Spoon".to_string()),
     }
   }
 }
@@ -26,11 +26,9 @@ impl Weapon for Dish {
     &mut self.data
   }
   
-  fn collision(&mut self) {
-    
-  }
-  
-  fn hit_target(&self, _food: &mut Food) {
-    
+  fn hit_target(&mut self, food: &mut Food) {
+    food.apply_damage(self.data.damage);
+    self.data.pierce -= 1;
+    self.data.food_hit.push(food.get_id());
   }
 }

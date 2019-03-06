@@ -6,6 +6,7 @@ use cgmath::{InnerSpace, Angle, Deg, Vector2, Vector3};
 
 #[derive(Clone)]
 pub struct Food {
+  id: i32,
   position: Vector3<f32>,
   size: Vector3<f32>,
   rotation: Vector3<f32>,
@@ -15,11 +16,13 @@ pub struct Food {
   speed: f32,
   target: Vector2<f32>,
   path: Vec<u32>,
+  health: i32,
 }
 
 impl Food {
-  pub fn new(position: Vector3<f32>, model: String, path: Vec<u32>, location: Vector2<i32>) -> Food {
+  pub fn new(id: i32, position: Vector3<f32>, health: i32, model: String, path: Vec<u32>, location: Vector2<i32>) -> Food {
     Food {
+      id,
       position,
       size: Vector3::new(1.0, 1.0, 1.0),
       rotation: Vector3::new(0.0, 0.0, 0.0),
@@ -29,6 +32,7 @@ impl Food {
       speed: 10.0,
       target: position.xz(),
       path,
+      health,
     }
   }
   
@@ -52,6 +56,18 @@ impl Food {
     self.rotation.y = angle.0 as f32+90.0;
     self.position.x += direction.x*self.speed*delta_time;
     self.position.z += direction.y*self.speed*delta_time;
+  }
+  
+  pub fn get_id(&self) -> i32 {
+    self.id
+  }
+  
+  pub fn is_cooked(&self) -> bool {
+    self.health <= 0
+  }
+  
+  pub fn apply_damage(&mut self, dmg: i32) {
+    self.health -= dmg;
   }
   
   pub fn get_tile_location(&self) -> Vector2<i32> {

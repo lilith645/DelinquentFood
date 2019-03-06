@@ -101,7 +101,7 @@ impl GameScreen {
       total_delta: 0.0,
       map,
       appliances: vec!(dishwasher, dishwasher2),
-      foods: vec!(Food::new(Vector3::new(food_pos.x, 0.0, food_pos.y), "Strawberry".to_string(), path, tile_loc)),
+      foods: vec!(Food::new(0, Vector3::new(food_pos.x, 0.0, food_pos.y), 5, "Strawberry".to_string(), path, tile_loc)),
       weapons: Vec::new(),
       ray_position: Vector2::new(0.0, 0.0),
       game_speed: 1,
@@ -217,6 +217,19 @@ impl Scene for GameScreen {
     let space_pressed = self.data().keys.space_pressed();
     
     if left_clicked {
+      let path = self.map.get_path();
+      let food_pos = self.map.tile_position_from_index(path[0] as usize);
+      let tile_loc = self.map.get_qr_from_index(path[0] as usize);
+      
+      let id = {
+        if self.foods.len() == 0 {
+          0
+        } else {
+          self.foods[self.foods.len()-1].get_id() + 1
+        }
+      };
+      
+      self.foods.push(Food::new(id, Vector3::new(food_pos.x, 0.0, food_pos.y), 5, "Strawberry".to_string(), path, tile_loc));
     /*  let fov = 60.0;
       let aspect = self.data().window_dim.x / self.data().window_dim.y;
       let near = 0.1;
@@ -391,7 +404,7 @@ impl Scene for GameScreen {
      let map = &self.map;
      
       update_game(map, appliances, foods, weapons, m_sizes, DELTA_STEP);
-      collisions(DELTA_STEP);
+      collisions(map, foods, weapons, m_sizes, DELTA_STEP);
       
       self.total_delta -= DELTA_STEP;
     }

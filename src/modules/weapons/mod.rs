@@ -5,6 +5,9 @@ mod dish;
 use maat_graphics::DrawCall;
 
 use crate::modules::food::Food;
+use crate::modules::hexagon::Layout;
+use crate::modules::hexagon::Hexagon;
+use crate::modules::map::Map;
 
 use cgmath::{Vector2, Vector3};
 
@@ -30,15 +33,17 @@ struct WeaponData {
   size: Vector3<f32>,
   direction: Vector2<f32>,
   velocity: f32,
-  damage: f32,
+  damage: i32,
+  pierce: i32,
   debuffs: Vec<Debuff>,
   weapon_type: WeaponType,
   range: i32, // 0 is not range limit
   model: String,
+  food_hit: Vec<i32>,
 }
 
 impl WeaponData {
-  pub fn new(vel: f32, dmg: f32, rng: i32, sz: Vector3<f32>, w_type: WeaponType, model: String) -> WeaponData {
+  pub fn new(vel: f32, dmg: i32, prc: i32, rng: i32, sz: Vector3<f32>, w_type: WeaponType, model: String) -> WeaponData {
     WeaponData {
       position: Vector3::new(0.0, 0.0, 0.0),
       tile_position: Vector2::new(0,0),
@@ -47,10 +52,12 @@ impl WeaponData {
       direction: Vector2::new(0.0, 0.0),
       velocity: vel,
       damage: dmg,
+      pierce: prc,
       debuffs: Vec::new(),
       weapon_type: w_type,
       range: rng, // 0 is not range limit
       model,
+      food_hit: Vec::new(),
     }
   }
 }
@@ -75,6 +82,10 @@ pub trait Weapon: WeaponClone {
   fn data(&self) -> &WeaponData;
   fn mut_data(&mut self) -> &mut WeaponData;
   
+  fn get_hexagon(&self, map: &Map) -> Hexagon {
+    map.pixel_to_hex(self.data().position.x, self.data().position.z)
+  }
+  
   fn launch(&mut self, position: Vector3<f32>, tile_position: Vector2<i32>, rotation: Vector3<f32>, direction: Vector2<f32>) {
     match self.data().weapon_type {
       WeaponType::Projectile => {
@@ -91,7 +102,7 @@ pub trait Weapon: WeaponClone {
     }
   }
   
-  fn update(&mut self, delta_time: f32) {
+  fn update(&mut self, delta_time: f32) -> bool {
     match self.data().weapon_type {
       WeaponType::Projectile => {
         self.mut_data().position.x += self.data().velocity*self.data().direction.x*delta_time;
@@ -104,11 +115,19 @@ pub trait Weapon: WeaponClone {
         
       },
     }
+    
+    self.data().position.x > 250.0 || self.data().position.x < -250.0 || self.data().position.z > 250.0 || self.data().position.z < -250.0
   }
   
-  fn collision(&mut self);
+  fn is_broken(&self) -> bool {
+    self.data().pierce <= 0
+  }
   
-  fn hit_target(&self, food: &mut Food);
+  fn hasnt_hit(&self, id: i32) -> bool {
+    !self.data().food_hit.contains(&id)
+  }
+  
+  fn hit_target(&mut self, food: &mut Food);
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
     let position = self.data().position;

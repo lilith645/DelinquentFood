@@ -85,7 +85,7 @@ fn main() {
   graphics.add_model("Spoon".to_string(), "./windys-modeling-agency/Unfinished/Spoon.glb".to_string());
   
   // Enemies
-  graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
+  graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Strawberry.glb".to_string());
   
   graphics.create_instance_buffer("EntityBuffer".to_string());
   

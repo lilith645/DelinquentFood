@@ -16,7 +16,17 @@ pub fn update_game(map: &Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut 
     appliance.update(foods, weapons, model_sizes, delta_time);
   }
   
+  let mut dead_weapons = Vec::new();
+  let mut i = 0;
   for weapon in &mut weapons.iter_mut() {
-    weapon.update(delta_time);
+    if weapon.update(delta_time) {
+      dead_weapons.push(i);
+    }
+    
+    i += 1;
+  }
+  
+  for i in 0..dead_weapons.len() {
+    weapons.remove(dead_weapons[i]-i);
   }
 }
