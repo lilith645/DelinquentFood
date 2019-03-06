@@ -1,7 +1,7 @@
 use maat_graphics::DrawCall;
 
 use crate::modules::food::Food;
-use crate::modules::towers::traits::Tower;
+use crate::modules::appliances::traits::Appliance;
 
 use cgmath::{Vector3};
 
@@ -28,12 +28,20 @@ impl Fridge {
   }
 }
 
-impl Tower for Fridge {
+impl Appliance for Fridge {
   fn update(&mut self, _foods: &mut Vec<Food>, _model_sizes: &mut Vec<(String, Vector3<f32>)>, _delta_time: f32) {
     
   }
   
   fn fire(&mut self) {
+    
+  }
+  
+  fn move_tile(&self) {
+    
+  }
+  
+  fn clean(&self) {
     
   }
   

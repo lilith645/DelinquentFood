@@ -6,8 +6,9 @@ use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
 use crate::modules::food::Food;
-use crate::modules::towers::Dishwasher;
-use crate::modules::towers::traits::Tower;
+use crate::modules::appliances::Dishwasher;
+use crate::modules::appliances::traits::Appliance;
+use crate::modules::weapons::{Weapon};
 
 use crate::modules::update::update_game;
 use crate::modules::physics::collisions;
@@ -25,15 +26,18 @@ pub struct GameScreen {
   data: SceneData,
   zoom: f32,
   escaped_pressed_last_frame: bool,
+  space_pressed_last_frame: bool,
   screen_offset: Vector2<f32>,
   camera: camera::Camera,
   rng: rand::prelude::ThreadRng,
   last_mouse_pos: Vector2<f32>,
   total_delta: f32,
   map: Map,
-  towers: Vec<Box<Tower>>,
+  appliances: Vec<Box<Appliance>>,
   foods: Vec<Food>,
+  weapons: Vec<Box<Weapon>>,
   ray_position: Vector2<f32>,
+  game_speed: i32,
 }
 
 impl GameScreen {
@@ -55,6 +59,7 @@ impl GameScreen {
     
    // let position = map.get_tile_position(3, 3);
     let dishwasher = Box::new(Dishwasher::new(Vector2::new(2,2), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &map));
+    let dishwasher2 = Box::new(Dishwasher::new(Vector2::new(-2,-3), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &map));
     
     /*
     // Ranges
@@ -88,19 +93,22 @@ impl GameScreen {
       data: SceneData::new(window_size, model_sizes),
       zoom: 1.0, // 0.5 to 2.0
       escaped_pressed_last_frame: false,
+      space_pressed_last_frame: false,
       screen_offset: Vector2::new(0.0, 0.0),
       camera: camera,
       rng: thread_rng(),
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
       map,
-      towers: vec!(dishwasher),
+      appliances: vec!(dishwasher, dishwasher2),
       foods: vec!(Food::new(Vector3::new(food_pos.x, 0.0, food_pos.y), "Strawberry".to_string(), path, tile_loc)),
+      weapons: Vec::new(),
       ray_position: Vector2::new(0.0, 0.0),
+      game_speed: 1,
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, towers: Vec<Box<Tower>>, foods: Vec<Food>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>) -> GameScreen {
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Food>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, game_speed: i32) -> GameScreen {
     
     GameScreen {
       data: SceneData::new(window_size, model_sizes),
@@ -112,9 +120,12 @@ impl GameScreen {
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
       map,
-      towers,
+      appliances,
       foods,
+      weapons,
       ray_position: Vector2::new(0.0, 0.0),
+      game_speed,
+      space_pressed_last_frame: false,
     }
   }
   
@@ -177,13 +188,14 @@ impl Scene for GameScreen {
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
     if self.data().window_resized {
-      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.towers.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone()))
+      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.appliances.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone(), self.weapons.clone(), self.game_speed))
     } else {
       Box::new(MenuScreen::new(window_size, self.data.model_sizes.clone()))
     }
   }
   
   fn update(&mut self, delta_time: f32) {
+    let delta_time = delta_time * self.game_speed as f32;
     self.mut_data().controller.update();
     self.total_delta += delta_time;
     
@@ -201,6 +213,8 @@ impl Scene for GameScreen {
     let mut d_pressed = self.data().keys.d_pressed();
     let r_pressed = self.data().keys.r_pressed();
     let f_pressed = self.data().keys.f_pressed();
+    let p_pressed = self.data().keys.p_pressed();
+    let space_pressed = self.data().keys.space_pressed();
     
     if left_clicked {
     /*  let fov = 60.0;
@@ -309,6 +323,39 @@ impl Scene for GameScreen {
     }
     self.last_mouse_pos = mouse;
     
+    if self.space_pressed_last_frame && !space_pressed {
+      self.space_pressed_last_frame = false;
+      match self.game_speed {
+        1 => {
+          self.game_speed = 2;
+        },
+        2 => {
+          self.game_speed = 4;
+        },
+        4 => {
+          self.game_speed = 8;
+        },
+        8 => {
+          self.game_speed = 16;
+        },
+        16 => {
+          self.game_speed = 32;
+        },
+        32 => {
+          self.game_speed = 64;
+        },
+        _ => {
+          self.game_speed = 1;
+        }
+      }
+    }
+    self.space_pressed_last_frame = space_pressed;
+    
+    
+    if p_pressed {
+      self.game_speed = 0;
+    }
+    
     if w_pressed {
       self.camera.process_movement(camera::Direction::YAlignedForward, delta_time);
     }
@@ -337,12 +384,13 @@ impl Scene for GameScreen {
     let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
     for _ in 0..delta_steps {
      // println!("Update is happening: {}", self.total_delta);
-     let towers = &mut self.towers;
+     let appliances = &mut self.appliances;
      let foods = &mut self.foods;
+     let weapons = &mut self.weapons;
      let m_sizes = &mut self.data.model_sizes;
      let map = &self.map;
      
-      update_game(map, towers, foods, m_sizes, DELTA_STEP);
+      update_game(map, appliances, foods, weapons, m_sizes, DELTA_STEP);
       collisions(DELTA_STEP);
       
       self.total_delta -= DELTA_STEP;
@@ -364,12 +412,28 @@ impl Scene for GameScreen {
       food.draw(draw_calls);
     }
     
-    for tower in &self.towers {
-      tower.draw(draw_calls);
+    for appliance in &self.appliances {
+      appliance.draw(draw_calls);
+    }
+    
+    for weapon in &self.weapons {
+      weapon.draw(draw_calls);
     }
     
     self.map.draw(draw_calls);
     
     draw_calls.push(DrawCall::draw_model(Vector3::new(self.ray_position.x, 0.0, self.ray_position.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
+    
+    /* 
+    ** UI
+    */
+    
+    // Game Speed
+    draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(64.0, 16.0), 
+                                           Vector2::new(196.0, 196.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Speed: x".to_owned() + &(self.game_speed).to_string(), 
+                                           "Arial".to_string()));
+    
   }
 }

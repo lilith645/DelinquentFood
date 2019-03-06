@@ -1,7 +1,8 @@
 use maat_graphics::DrawCall;
 
 use crate::modules::food::Food;
-use crate::modules::towers::traits::Tower;
+use crate::modules::appliances::traits::Appliance;
+use crate::modules::weapons::{Weapon, Dish};
 use crate::modules::map::Map;
 use crate::modules::hexagon::Hexagon;
 
@@ -14,13 +15,14 @@ pub struct Dishwasher {
   size: Vector3<f32>,
   rotation: Vector3<f32>,
   model: String,
-  tile_location: Vector2<u32>,
+  tile_location: Vector2<i32>,
   range: u32,
+  charge: f32,
   fire_rate: f32,
 }
 
 impl Dishwasher {
-  pub fn new(tile: Vector2<u32>, size: Vector3<f32>, rotation: Vector3<f32>, map: &Map) -> Dishwasher {
+  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, map: &Map) -> Dishwasher {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
     
     Dishwasher {
@@ -30,15 +32,16 @@ impl Dishwasher {
       rotation,
       model: "Dishwasher".to_string(),
       tile_location: tile,
-      range: 30,
+      range: 3,
+      charge: 0.0,
       fire_rate: 1.0,
     }
   }
 }
 
 
-impl Tower for Dishwasher {
-  fn update(&mut self, foods: &mut Vec<Food>, model_sizes: &mut Vec<(String, Vector3<f32>)>, _delta_time: f32) {
+impl Appliance for Dishwasher {
+  fn update(&mut self, foods: &mut Vec<Food>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, delta_time: f32) {
     self.offset.y = 0.0;
     for (reference, size) in model_sizes {
       if *reference == "Hexagon".to_string() {
@@ -51,15 +54,37 @@ impl Tower for Dishwasher {
     
     for food in foods {
       let location = food.get_tile_location();
-      let dist = Hexagon::hex_distance(Hexagon::new(self.tile_location.x as i32, self.tile_location.y as i32, "".to_string()), Hexagon::new(location.x, location.y, "".to_string()));
+      let dist = Hexagon::hex_distance(Hexagon::new(self.tile_location.x, self.tile_location.y, "".to_string()), Hexagon::new(location.x, location.y, "".to_string()));
       
-      if dist < self.range as i32 {
+      if dist <= self.range as i32 {
         self.rotation.y = self.rotate_towards(self.position, food, 90.0);
+        
+        if self.charge >= self.fire_rate {
+          let loc = food.get_location();
+          let direction = Vector2::new(loc.x-self.position.x, loc.y-self.position.z).normalize();
+          
+          let mut weapon = Dish::new();
+          weapon.launch(self.position+self.offset, self.tile_location, self.rotation, direction);
+          
+          weapons.push(Box::new(weapon));
+          
+          self.charge = 0.0;
+        }
       }
     }
+    
+    self.charge += delta_time;
   }
   
   fn fire(&mut self) {
+    
+  }
+  
+  fn move_tile(&self) {
+    
+  }
+  
+  fn clean(&self) {
     
   }
   

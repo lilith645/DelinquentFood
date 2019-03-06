@@ -76,6 +76,7 @@ impl Scene for LoadScreen {
       draw_calls.push(DrawCall::load_model("GreenHexagon".to_string()));
       draw_calls.push(DrawCall::load_model("PurpleHexagon".to_string()));
       draw_calls.push(DrawCall::load_model("RedHexagon".to_string()));
+      draw_calls.push(DrawCall::load_model("Spoon".to_string()));
     }
     
     draw_calls.push(DrawCall::set_texture_scale(1.0));

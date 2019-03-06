@@ -4,5 +4,6 @@ pub mod physics;
 pub mod update;
 pub mod map;
 pub mod food;
-pub mod towers;
+pub mod appliances;
 pub mod hexagon;
+pub mod weapons;

@@ -81,6 +81,9 @@ fn main() {
   graphics.add_model("Fridge".to_string(), "./windys-modeling-agency/Unfinished/Fridge.glb".to_string());
   graphics.add_model("Dishwasher".to_string(), "./windys-modeling-agency/Unfinished/TowerStart.glb".to_string());
   
+  // Weapons
+  graphics.add_model("Spoon".to_string(), "./windys-modeling-agency/Unfinished/Spoon.glb".to_string());
+  
   // Enemies
   graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
   
