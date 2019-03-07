@@ -6,10 +6,10 @@ use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
 use crate::modules::food::Food;
-use crate::modules::appliances::Dishwasher;
+use crate::modules::appliances::{Dishwasher, Fridge};
 use crate::modules::appliances::traits::Appliance;
 use crate::modules::weapons::{Weapon};
-use crate::modules::hexagon::HexagonType;
+use crate::modules::hexagon::{Layout, Hexagon, HexagonType};
 
 use crate::modules::update::update_game;
 use crate::modules::physics::collisions;
@@ -153,6 +153,7 @@ impl GameScreen {
     let mouse = self.data.mouse_pos;
     
     let mut one_pressed = self.data.keys.one_pressed();
+    let mut two_pressed = self.data.keys.two_pressed();
     let mut w_pressed = self.data.keys.w_pressed();
     let mut a_pressed = self.data.keys.a_pressed();
     let mut s_pressed = self.data.keys.s_pressed();
@@ -210,11 +211,23 @@ impl GameScreen {
         let foods = &mut self.foods;
         let weapons = &mut self.weapons;
         let m_sizes = &mut self.data.model_sizes;
+        let map = &self.map;
         
-        appliance.update(foods, weapons, m_sizes, 0.0);
+        appliance.update(foods, weapons, m_sizes, map, 0.0);
       }
       self.mouse_state = MouseState::Placing;
-      println!("Placing mode");
+    }
+    if two_pressed {
+      self.placing_appliance = Some(Box::new(Fridge::new(Vector2::new(0,0), Vector3::new(3.0, 3.0, 3.0), Vector3::new(0.0, 0.0, 0.0), &self.map)));
+      if let Some(appliance) = &mut self.placing_appliance {
+        let foods = &mut self.foods;
+        let weapons = &mut self.weapons;
+        let m_sizes = &mut self.data.model_sizes;
+        let map = &self.map;
+        
+        appliance.update(foods, weapons, m_sizes, map, 0.0);
+      }
+      self.mouse_state = MouseState::Placing;
     }
   }
   
@@ -332,7 +345,6 @@ impl GameScreen {
               self.valid_place = false;
               self.placing_appliance = None;
               self.mouse_state = MouseState::World;
-              println!("World mode");
             }
           }
         }
@@ -474,7 +486,37 @@ impl Scene for GameScreen {
       MouseState::Placing => {
         if let Some(appliance) = &self.placing_appliance {
           if self.valid_place {
-            appliance.draw(draw_calls);
+            appliance.draw_hologram(draw_calls);
+            
+            let mut hexagons: Vec<Hexagon> = Vec::new();
+            
+            let radius = appliance.get_range() as i32;
+            for q in -radius..radius+1 {
+              let r1 = (-radius).max(-q - radius);
+              let r2 = radius.min(-q + radius);
+              
+              for r in r1..r2+1 {
+                let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
+                let mut texture = "PurpleHexagon".to_string();
+                
+                hexagons.push(Hexagon::new(q, r, texture.to_string()));
+              }
+            }
+            
+            let pos = appliance.get_position();
+            let origin = Vector2::new(pos.x, pos.z);
+            let layout = Layout::new(origin, Vector2::new(8.0,8.0));
+            
+            for hexagon in hexagons {
+              let location = layout.hex_to_pixel(hexagon.clone());
+         
+              let position = Vector3::new(location.x, 0.1, location.y);
+              let height = 1.2;
+              draw_calls.push(DrawCall::draw_hologram_model(position,
+                                                   Vector3::new(8.0/4.0, height, 8.0/4.0),
+                                                   Vector3::new(0.0, 90.0, 0.0), 
+                                                   hexagon.get_model()));
+            }
           }
         }
       },

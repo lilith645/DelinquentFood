@@ -5,19 +5,19 @@ use crate::modules::food::Food;
 use cgmath::Vector3;
 
 #[derive(Clone)]
-pub struct Dish {
+pub struct ColdSnap {
   data: WeaponData,
 }
 
-impl Dish {
-  pub fn new() -> Dish {
-    Dish {
-      data: WeaponData::new(80.0, 1, 2, 0.0, Vector3::new(0.5, 0.5, 0.5), WeaponType::Projectile, "Spoon".to_string()),
+impl ColdSnap {
+  pub fn new() -> ColdSnap {
+    ColdSnap {
+      data: WeaponData::new(0.0, 1, 1, 0.6, Vector3::new(1.9, 0.6, 1.9), WeaponType::Tile, "BlueHexagon".to_string()),
     }
   }
 }
 
-impl Weapon for Dish {
+impl Weapon for ColdSnap {
   fn data(&self) -> &WeaponData {
     &self.data
   }
@@ -28,7 +28,6 @@ impl Weapon for Dish {
   
   fn hit_target(&mut self, food: &mut Food) {
     food.apply_damage(self.data.damage);
-    self.data.pierce -= 1;
     self.data.food_hit.push(food.get_id());
   }
 }

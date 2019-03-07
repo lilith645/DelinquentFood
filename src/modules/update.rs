@@ -13,7 +13,7 @@ pub fn update_game(map: &Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut 
   }
   
   for appliance in &mut appliances.iter_mut() {
-    appliance.update(foods, weapons, model_sizes, delta_time);
+    appliance.update(foods, weapons, model_sizes, map, delta_time);
   }
   
   let mut dead_weapons = Vec::new();

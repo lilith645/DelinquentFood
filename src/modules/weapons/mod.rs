@@ -1,6 +1,8 @@
 pub use self::dish::Dish;
+pub use self::coldsnap::ColdSnap;
 
 mod dish;
+mod coldsnap;
 
 use maat_graphics::DrawCall;
 
@@ -37,13 +39,13 @@ struct WeaponData {
   pierce: i32,
   debuffs: Vec<Debuff>,
   weapon_type: WeaponType,
-  range: i32, // 0 is not range limit
   model: String,
   food_hit: Vec<i32>,
+  timer: f32,
 }
 
 impl WeaponData {
-  pub fn new(vel: f32, dmg: i32, prc: i32, rng: i32, sz: Vector3<f32>, w_type: WeaponType, model: String) -> WeaponData {
+  pub fn new(vel: f32, dmg: i32, prc: i32, timer: f32, sz: Vector3<f32>, w_type: WeaponType, model: String) -> WeaponData {
     WeaponData {
       position: Vector3::new(0.0, 0.0, 0.0),
       tile_position: Vector2::new(0,0),
@@ -55,9 +57,9 @@ impl WeaponData {
       pierce: prc,
       debuffs: Vec::new(),
       weapon_type: w_type,
-      range: rng, // 0 is not range limit
       model,
       food_hit: Vec::new(),
+      timer: timer,
     }
   }
 }
@@ -94,7 +96,9 @@ pub trait Weapon: WeaponClone {
         self.mut_data().direction = direction;
       },
       WeaponType::Tile => {
+        self.mut_data().position = position;
         self.mut_data().tile_position = tile_position;
+        self.mut_data().rotation = rotation;
       }
       WeaponType::AntiFood => {
         
@@ -109,14 +113,17 @@ pub trait Weapon: WeaponClone {
         self.mut_data().position.z += self.data().velocity*self.data().direction.y*delta_time;
       },
       WeaponType::Tile => {
-        
+        self.mut_data().timer -= delta_time;
+        if self.mut_data().timer <= 0.0 {
+          self.mut_data().pierce = 0;
+        }
       }
       WeaponType::AntiFood => {
         
       },
     }
     
-    self.data().position.x > 250.0 || self.data().position.x < -250.0 || self.data().position.z > 250.0 || self.data().position.z < -250.0
+    self.data().position.x > 250.0 || self.data().position.x < -250.0 || self.data().position.z > 250.0 || self.data().position.z < -250.0 || self.is_broken()
   }
   
   fn is_broken(&self) -> bool {
