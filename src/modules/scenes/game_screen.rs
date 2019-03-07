@@ -17,7 +17,7 @@ use crate::modules::map::Map;
 use rand;
 use rand::{thread_rng};
 
-use cgmath::{SquareMatrix, Matrix4, Point3, Deg, Vector2, Vector3, Vector4, PerspectiveFov};
+use cgmath::{InnerSpace, SquareMatrix, Matrix4, Point3, Deg, Vector2, Vector3, Vector4, PerspectiveFov};
 
 const DEFAULT_ZOOM: f32 = 1.0;
 const DELTA_STEP: f32 = 0.01;
@@ -230,7 +230,7 @@ impl Scene for GameScreen {
       };
       
       self.foods.push(Food::new(id, Vector3::new(food_pos.x, 0.0, food_pos.y), 5, "Strawberry".to_string(), path, tile_loc));
-    /*  let fov = 60.0;
+      let fov = 60.0;
       let aspect = self.data().window_dim.x / self.data().window_dim.y;
       let near = 0.1;
       let far = 256.0;
@@ -251,64 +251,35 @@ impl Scene for GameScreen {
       let invt_view = view.invert().unwrap();
       let invt_perspective = Matrix4::from(perspective).invert().unwrap();
       
-      let position = mouse;
+      let mouse_position = mouse;
       let mut temp_cam = self.camera.clone();
-      temp_cam.set_move_speed(1.0);
-      temp_cam.process_movement(camera::Direction::Forward, position.y-self.data.window_dim.y*0.5);
-      temp_cam.process_movement(camera::Direction::Right, position.x-self.data.window_dim.x*0.5);
       
-      let cam_position = temp_cam.get_position();
+      // normalise mouse coords
+      let x = (2.0*mouse_position.x) / self.data.window_dim.x - 1.0;
+      let y = -(2.0*mouse_position.y) / self.data.window_dim.y + 1.0;
       
-      let position = Vector4::new(cam_position.z, cam_position.x, 0.0, 0.5);
-      let pos = invt_perspective * invt_view * position;
-      println!("Position: {:?}", pos);
-      let pix_x = position.x;
-      let pix_y = position.y;
-      let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
-      self.ray_position = Vector2::new(pix_x, pix_y);
-      self.map.highlight_hex(clicked_hex);*/
+      let mut clip_coords = Vector4::new(x, y, -1.0, 1.0);
       
-      let mut temp_camera = self.camera.clone();
+      // clip to eye space
+      let eye_matrix = invt_perspective * clip_coords;
+      let eye_coords = Vector4::new(eye_matrix.x, eye_matrix.y, -1.0, 0.0);
       
-      let half_width = self.data().window_dim.x*0.5;
-      let half_height = self.data().window_dim.y*0.5;
+      let world_matrix = invt_view * eye_coords;
+      let mouse_ray = Vector3::new(world_matrix.x, world_matrix.y, world_matrix.z).normalize();
       
-      if mouse.y > half_height {
-        let speed = mouse.y - half_height;
-        temp_camera.set_move_speed(speed*(speed/half_height));
-        temp_camera.process_movement(camera::Direction::Down, 1.0);
-      } else if mouse.y < half_height {
-        let speed = half_height-mouse.y;
-        println!("{} / {} = {}", speed, half_height, speed/half_height);
-        temp_camera.set_move_speed(speed*(speed/half_height));
-        temp_camera.process_movement(camera::Direction::Up, 1.0);
+      if mouse_ray.y < 0.0 {
+        let mut crnt_pos = temp_cam.get_position();
+        while crnt_pos.y > 0.0 {
+          crnt_pos += mouse_ray;
+        }
+        crnt_pos -= mouse_ray;
+        
+        let pix_x = crnt_pos.x;
+        let pix_y = crnt_pos.z;
+        let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+        self.ray_position = Vector2::new(pix_x, pix_y);
+        self.map.highlight_hex(clicked_hex);
       }
-      
-      if mouse.x > half_width {
-        let speed = mouse.x - half_width;
-        temp_camera.set_move_speed(speed*(speed/half_width));
-        temp_camera.process_movement(camera::Direction::Right, 1.0);
-      } else if mouse.x < half_width {
-        let speed = half_width-mouse.x;
-        temp_camera.set_move_speed(speed*(speed/half_width));
-        temp_camera.process_movement(camera::Direction::Left, 1.0);
-      }
-      
-      let front = temp_camera.get_front();
-      let mut position = temp_camera.get_position();
-      
-      while position.y > 0.0 {
-        position += front;
-      }
-      
-      let pix_x = position.x;
-      let pix_y = position.z;
-      self.ray_position = Vector2::new(pix_x, pix_y);
-      let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
-      println!("{} {}", clicked_hex.q(), clicked_hex.r());
-      self.map.highlight_hex(clicked_hex);
-      
-      println!("Pixel location: {}, {}", pix_x, pix_y);
     }
     
     if self.data().window_resized {

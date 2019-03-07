@@ -17,6 +17,7 @@ pub struct Food {
   target: Vector2<f32>,
   path: Vec<u32>,
   health: i32,
+  total_dt: f32,
 }
 
 impl Food {
@@ -33,6 +34,7 @@ impl Food {
       target: position.xz(),
       path,
       health,
+      total_dt: 0.0,
     }
   }
   
@@ -53,9 +55,15 @@ impl Food {
     let direction = Vector2::new(self.target.x-self.position.x, self.target.y-self.position.z).normalize();
     let angle = Deg::atan2(direction.x, direction.y);
     
-    self.rotation.y = angle.0 as f32+90.0;
+    self.rotation.y += 90.0*delta_time;//angle.0 as f32+90.0;
     self.position.x += direction.x*self.speed*delta_time;
     self.position.z += direction.y*self.speed*delta_time;
+    self.position.y = 1.0 + 2.0*self.total_dt.sin();
+    
+    self.total_dt += delta_time*0.5;
+    if self.total_dt > 3.14 {
+      self.total_dt -= 3.14;
+    }
   }
   
   pub fn get_id(&self) -> i32 {
