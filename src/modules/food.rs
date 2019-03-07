@@ -1,5 +1,6 @@
 use maat_graphics::DrawCall;
 
+use crate::modules::weapons::Debuff;
 use crate::modules::map::Map;
 
 use cgmath::{InnerSpace, Angle, Deg, Vector2, Vector3};
@@ -11,6 +12,7 @@ pub struct Food {
   size: Vector3<f32>,
   rotation: Vector3<f32>,
   model: String,
+  debuffs: Vec<Debuff>,
   path_number: u32,
   path_location: Vector2<i32>,
   speed: f32,
@@ -29,6 +31,7 @@ impl Food {
       size: Vector3::new(1.0, 1.0, 1.0),
       rotation: Vector3::new(0.0, 0.0, 0.0),
       model,
+      debuffs: Vec::new(),
       path_number: 0,
       path_location: location,
       speed: 10.0,
@@ -60,9 +63,36 @@ impl Food {
     let direction = Vector2::new(self.target.x-self.position.x, self.target.y-self.position.z).normalize();
     let angle = Deg::atan2(direction.x, direction.y);
     
+    let mut speed = self.speed;
+    let mut remove_debuffs = Vec::new();
+    for i in 0..self.debuffs.len() {
+      match &mut self.debuffs[i] {
+        Debuff::Slow(timer) => {
+          *timer -= delta_time;
+          if *timer <= 0.0 {
+            remove_debuffs.push(i);
+          } else {
+            speed *= 0.65;
+          }
+        },
+        Debuff::Freeze(timer) => {
+          speed = 0.0;
+        },
+        Debuff::Reverse(timer) => {
+          speed = -speed;
+        }
+      }
+    }
+    
+    let mut offset = 0;
+    for i in 0..remove_debuffs.len() {
+      self.debuffs.remove(remove_debuffs[i]-offset);
+      offset += 1;
+    }
+    
     self.rotation.y += 90.0*delta_time;//angle.0 as f32+90.0;
-    self.position.x += direction.x*self.speed*delta_time;
-    self.position.z += direction.y*self.speed*delta_time;
+    self.position.x += direction.x*speed*delta_time;
+    self.position.z += direction.y*speed*delta_time;
     self.position.y = 1.0 + 2.0*self.total_dt.sin();
     
     self.total_dt += delta_time*0.5;
@@ -87,6 +117,14 @@ impl Food {
     self.health -= dmg;
     if self.health <= 0 {
       self.cooked = true;
+    }
+  }
+  
+  pub fn apply_debuffs(&mut self, debuffs: Vec<Debuff>) {
+    for debuff in debuffs {
+      if !self.debuffs.contains(&debuff) {
+        self.debuffs.push(debuff);
+      }
     }
   }
   

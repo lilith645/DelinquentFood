@@ -13,11 +13,11 @@ use crate::modules::map::Map;
 
 use cgmath::{Vector2, Vector3};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Debuff {
-  Slow,
-  Freeze,
-  Reverse,
+  Slow(f32),
+  Freeze(f32),
+  Reverse(f32),
 }
 
 #[derive(Clone)]
@@ -45,7 +45,7 @@ struct WeaponData {
 }
 
 impl WeaponData {
-  pub fn new(vel: f32, dmg: i32, prc: i32, timer: f32, sz: Vector3<f32>, w_type: WeaponType, model: String) -> WeaponData {
+  pub fn new(vel: f32, dmg: i32, prc: i32, timer: f32, sz: Vector3<f32>, w_type: WeaponType, debuffs: Vec<Debuff>, model: String) -> WeaponData {
     WeaponData {
       position: Vector3::new(0.0, 0.0, 0.0),
       tile_position: Vector2::new(0,0),
@@ -55,7 +55,7 @@ impl WeaponData {
       velocity: vel,
       damage: dmg,
       pierce: prc,
-      debuffs: Vec::new(),
+      debuffs,
       weapon_type: w_type,
       model,
       food_hit: Vec::new(),

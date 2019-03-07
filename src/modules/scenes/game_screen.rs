@@ -10,6 +10,7 @@ use crate::modules::appliances::{Dishwasher, Fridge};
 use crate::modules::appliances::traits::Appliance;
 use crate::modules::weapons::{Weapon};
 use crate::modules::hexagon::{Layout, Hexagon, HexagonType};
+use crate::modules::thefoodstore::FoodStore;
 
 use crate::modules::update::update_game;
 use crate::modules::physics::collisions;
@@ -49,6 +50,7 @@ pub struct GameScreen {
   bin: i32,
   placing_appliance: Option<Box<Appliance>>,
   valid_place: bool,
+  the_food_store: FoodStore,
 }
 
 impl GameScreen {
@@ -99,6 +101,7 @@ impl GameScreen {
     let path = map.get_path();
     let food_pos = map.tile_position_from_index(path[0] as usize);
     let tile_loc = map.get_qr_from_index(path[0] as usize);
+    let store = FoodStore::new(&map);
     
     GameScreen {
       data: SceneData::new(window_size, model_sizes),
@@ -112,7 +115,7 @@ impl GameScreen {
       total_delta: 0.0,
       map,
       appliances: vec!(dishwasher, dishwasher2),
-      foods: vec!(Food::new(0, Vector3::new(food_pos.x, 0.0, food_pos.y), 5, "Strawberry".to_string(), path, tile_loc)),
+      foods: vec!(),
       weapons: Vec::new(),
       ray_position: Vector2::new(0.0, 0.0),
       game_speed: 1,
@@ -120,10 +123,11 @@ impl GameScreen {
       bin: 0,
       placing_appliance: None,
       valid_place: false,
+      the_food_store: store,
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Food>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, game_speed: i32, bin: i32) -> GameScreen {
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Food>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, the_food_store: FoodStore, game_speed: i32, bin: i32) -> GameScreen {
     
     GameScreen {
       data: SceneData::new(window_size, model_sizes),
@@ -145,6 +149,7 @@ impl GameScreen {
       bin,
       placing_appliance: None,
       valid_place: false,
+      the_food_store,
     }
   }
   
@@ -274,20 +279,6 @@ impl GameScreen {
     let mouse = self.data.mouse_pos;
     
     if left_clicked {
-      let path = self.map.get_path();
-      let food_pos = self.map.tile_position_from_index(path[0] as usize);
-      let tile_loc = self.map.get_qr_from_index(path[0] as usize);
-      
-      let id = {
-        if self.foods.len() == 0 {
-          0
-        } else {
-          self.foods[self.foods.len()-1].get_id() + 1
-        }
-      };
-      
-      self.foods.push(Food::new(id, Vector3::new(food_pos.x, 0.0, food_pos.y), 5, "Strawberry".to_string(), path, tile_loc));
-      
       if self.last_mouse_pos != Vector2::new(-1.0, -1.0) {
         let x_offset = self.last_mouse_pos.x - mouse.x;
         let y_offset = mouse.y - self.last_mouse_pos.y;
@@ -405,16 +396,25 @@ impl GameScreen {
   pub fn update_objects(&mut self, delta_time: f32) {
     let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
     for _ in 0..delta_steps {
-     // println!("Update is happening: {}", self.total_delta);
-     let appliances = &mut self.appliances;
-     let foods = &mut self.foods;
-     let weapons = &mut self.weapons;
-     let m_sizes = &mut self.data.model_sizes;
-     let map = &self.map;
-     let bin = &mut self.bin;
-     
+      let some_food = self.the_food_store.update(DELTA_STEP);
+      if let Some(food) = some_food {
+        self.foods.push(food);
+      }
+      
+      // println!("Update is happening: {}", self.total_delta);
+      let appliances = &mut self.appliances;
+      let foods = &mut self.foods;
+      let weapons = &mut self.weapons;
+      let m_sizes = &mut self.data.model_sizes;
+      let map = &self.map;
+      let bin = &mut self.bin;
+      
       update_game(map, appliances, foods, weapons, m_sizes, DELTA_STEP);
       collisions(map, foods, weapons, m_sizes, bin, DELTA_STEP);
+      
+      if self.foods.len() == 0 {
+        self.the_food_store.next_wave();
+      }
       
       self.total_delta -= DELTA_STEP;
     }
@@ -432,13 +432,14 @@ impl Scene for GameScreen {
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
     if self.data().window_resized {
-      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.appliances.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone(), self.weapons.clone(), self.game_speed, self.bin))
+      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.appliances.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone(), self.weapons.clone(), self.the_food_store.clone(), self.game_speed, self.bin))
     } else {
       Box::new(MenuScreen::new(window_size, self.data.model_sizes.clone()))
     }
   }
   
   fn update(&mut self, delta_time: f32) {
+    let real_delta = delta_time;
     let delta_time = delta_time * self.game_speed as f32;
     self.mut_data().controller.update();
     self.total_delta += delta_time;
@@ -455,7 +456,7 @@ impl Scene for GameScreen {
       }
     }
     
-    self.update_keypresses(delta_time);
+    self.update_keypresses(real_delta);
     
     self.update_objects(delta_time);
     
@@ -532,6 +533,11 @@ impl Scene for GameScreen {
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Bin is ".to_owned() + &(self.bin).to_string() + "% full.", 
+                                           "Arial".to_string()));
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, self.data.window_dim.y-128.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Wave: ".to_owned() + &(self.the_food_store.wave_number()).to_string(), 
                                            "Arial".to_string()));
                                            
     // Game Speed
