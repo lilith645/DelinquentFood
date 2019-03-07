@@ -1,8 +1,17 @@
 use maat_graphics::DrawCall;
 use crate::modules::food::Food;
 use crate::modules::weapons::Weapon;
+use crate::modules::map::Map;
 
 use cgmath::{InnerSpace, Angle, Deg, Vector2, Vector3};
+
+#[derive(Clone)]
+pub enum TargetPriority {
+  First,
+  Last,
+  Close,
+  //Far,
+}
 
 pub trait ApplianceClone {
   fn clone_appliance(&self) -> Box<Appliance>;
@@ -42,6 +51,8 @@ pub trait Appliance: ApplianceClone {
     
     angle.0 as f32+angle_offset
   }
+  
+  fn set_qr_location(&mut self, q: i32, r: i32, map: &Map);
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>);
 }

@@ -18,6 +18,7 @@ pub struct Food {
   path: Vec<u32>,
   health: i32,
   total_dt: f32,
+  cooked: bool,
 }
 
 impl Food {
@@ -35,6 +36,7 @@ impl Food {
       path,
       health,
       total_dt: 0.0,
+      cooked: false,
     }
   }
   
@@ -42,8 +44,11 @@ impl Food {
     if (self.position.x-self.target.x + self.position.z-self.target.y).abs() < 0.1 {
       self.path_number += 1;
       if self.path_number >= self.path.len() as u32 {
-        self.path_number = 0;
+        self.health = 0;
+        self.cooked = false;
+        return;
       }
+      
       let map_pos = map.tile_position_from_index(self.path[self.path_number as usize] as usize);
       
       self.path_location = map.get_qr_from_index(self.path[self.path_number as usize] as usize);
@@ -71,11 +76,18 @@ impl Food {
   }
   
   pub fn is_cooked(&self) -> bool {
-    self.health <= 0
+    self.cooked
+  }
+  
+  pub fn is_rotten(&self) -> bool {
+    self.health <= 0 && !self.is_cooked()
   }
   
   pub fn apply_damage(&mut self, dmg: i32) {
     self.health -= dmg;
+    if self.health <= 0 {
+      self.cooked = true;
+    }
   }
   
   pub fn get_tile_location(&self) -> Vector2<i32> {
@@ -87,6 +99,6 @@ impl Food {
   }
   
   pub fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
-    draw_calls.push(DrawCall::draw_model(self.position, Vector3::new(2.0, 2.0, 2.0), self.rotation, self.model.to_string()));
+    draw_calls.push(DrawCall::draw_model(self.position, self.size, self.rotation, self.model.to_string()));
   }
 }

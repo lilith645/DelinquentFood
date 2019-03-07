@@ -9,6 +9,7 @@ use crate::modules::food::Food;
 use crate::modules::appliances::Dishwasher;
 use crate::modules::appliances::traits::Appliance;
 use crate::modules::weapons::{Weapon};
+use crate::modules::hexagon::HexagonType;
 
 use crate::modules::update::update_game;
 use crate::modules::physics::collisions;
@@ -21,6 +22,12 @@ use cgmath::{InnerSpace, SquareMatrix, Matrix4, Point3, Deg, Vector2, Vector3, V
 
 const DEFAULT_ZOOM: f32 = 1.0;
 const DELTA_STEP: f32 = 0.01;
+
+enum MouseState {
+  World,
+  Ui,
+  Placing,
+}
 
 pub struct GameScreen {
   data: SceneData,
@@ -38,6 +45,10 @@ pub struct GameScreen {
   weapons: Vec<Box<Weapon>>,
   ray_position: Vector2<f32>,
   game_speed: i32,
+  mouse_state: MouseState,
+  bin: i32,
+  placing_appliance: Option<Box<Appliance>>,
+  valid_place: bool,
 }
 
 impl GameScreen {
@@ -105,10 +116,14 @@ impl GameScreen {
       weapons: Vec::new(),
       ray_position: Vector2::new(0.0, 0.0),
       game_speed: 1,
+      mouse_state: MouseState::World,
+      bin: 0,
+      placing_appliance: None,
+      valid_place: false,
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Food>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, game_speed: i32) -> GameScreen {
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Food>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, game_speed: i32, bin: i32) -> GameScreen {
     
     GameScreen {
       data: SceneData::new(window_size, model_sizes),
@@ -126,16 +141,81 @@ impl GameScreen {
       ray_position: Vector2::new(0.0, 0.0),
       game_speed,
       space_pressed_last_frame: false,
+      mouse_state: MouseState::World,
+      bin,
+      placing_appliance: None,
+      valid_place: false,
     }
   }
   
-  pub fn update_keypresses(&mut self, escape_pressed: bool) {
+  pub fn update_keypresses(&mut self, delta_time: f32) {
+    let escape_pressed = self.data().keys.escape_pressed();
+    let mouse = self.data.mouse_pos;
+    
+    let mut one_pressed = self.data.keys.one_pressed();
+    let mut w_pressed = self.data.keys.w_pressed();
+    let mut a_pressed = self.data.keys.a_pressed();
+    let mut s_pressed = self.data.keys.s_pressed();
+    let mut d_pressed = self.data.keys.d_pressed();
+    let r_pressed = self.data().keys.r_pressed();
+    let f_pressed = self.data().keys.f_pressed();
+    let p_pressed = self.data().keys.p_pressed();
+    
+    
     if self.escaped_pressed_last_frame && !escape_pressed {
       self.escaped_pressed_last_frame = false;
       self.mut_data().next_scene = true;
     }
     
     self.escaped_pressed_last_frame = escape_pressed;
+    
+    match self.update_controller_input() {
+      (w, a, s, d, x_offset, y_offset) => {
+        // First person setup
+        if w { w_pressed = w; }
+        if a { a_pressed = a; }
+        if s { s_pressed = s; }
+        if d { d_pressed = d; }
+        self.camera.process_mouse_movement(x_offset, y_offset);
+      }
+    }
+    
+    self.last_mouse_pos = mouse;
+    
+    if p_pressed {
+      self.game_speed = 0;
+    }
+    
+    if w_pressed {
+      self.camera.process_movement(camera::Direction::YAlignedForward, delta_time);
+    }
+    if a_pressed {
+      self.camera.process_movement(camera::Direction::YAlignedLeft, delta_time);
+    }
+    if s_pressed {
+      self.camera.process_movement(camera::Direction::YAlignedBackward, delta_time);
+    }
+    if d_pressed {
+      self.camera.process_movement(camera::Direction::YAlignedRight, delta_time);
+    }
+    if r_pressed {
+      self.camera.process_movement(camera::Direction::PositiveY, delta_time);
+    }
+    if f_pressed {
+      self.camera.process_movement(camera::Direction::NegativeY, delta_time);
+    }
+    if one_pressed {
+      self.placing_appliance = Some(Box::new(Dishwasher::new(Vector2::new(0,0), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &self.map)));
+      if let Some(appliance) = &mut self.placing_appliance {
+        let foods = &mut self.foods;
+        let weapons = &mut self.weapons;
+        let m_sizes = &mut self.data.model_sizes;
+        
+        appliance.update(foods, weapons, m_sizes, 0.0);
+      }
+      self.mouse_state = MouseState::Placing;
+      println!("Placing mode");
+    }
   }
   
   pub fn update_controller_input(&mut self) -> (bool, bool, bool, bool, f32, f32) {
@@ -175,46 +255,10 @@ impl GameScreen {
     
     (w_pressed, a_pressed, s_pressed, d_pressed, -right_stick_pos.x, right_stick_pos.y)
   }
-}
-
-impl Scene for GameScreen {
-  fn data(&self) -> &SceneData {
-    &self.data
-  }
   
-  fn mut_data(&mut self) -> &mut SceneData {
-    &mut self.data
-  }
-  
-  fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
-    if self.data().window_resized {
-      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.appliances.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone(), self.weapons.clone(), self.game_speed))
-    } else {
-      Box::new(MenuScreen::new(window_size, self.data.model_sizes.clone()))
-    }
-  }
-  
-  fn update(&mut self, delta_time: f32) {
-    let delta_time = delta_time * self.game_speed as f32;
-    self.mut_data().controller.update();
-    self.total_delta += delta_time;
-    
-    let mouse = self.data().mouse_pos;
-    let left_clicked = self.data().left_mouse;
-    let _left_mouse_dragged = self.data().left_mouse_dragged;
-    let _middle_mouse_dragged = self.data().middle_mouse_dragged;
-    let _right_mouse_dragged = self.data().right_mouse_dragged;
-    let escape_pressed = self.data().keys.escape_pressed();
-    let scroll_delta = self.data().scroll_delta;
-    let _keys_pressed_this_frame = self.get_keys_pressed_this_frame();
-    let mut w_pressed = self.data().keys.w_pressed();
-    let mut a_pressed = self.data().keys.a_pressed();
-    let mut s_pressed = self.data().keys.s_pressed();
-    let mut d_pressed = self.data().keys.d_pressed();
-    let r_pressed = self.data().keys.r_pressed();
-    let f_pressed = self.data().keys.f_pressed();
-    let p_pressed = self.data().keys.p_pressed();
-    let space_pressed = self.data().keys.space_pressed();
+  pub fn update_world(&mut self, delta_time: f32) {
+    let left_clicked = self.data.left_mouse;
+    let mouse = self.data.mouse_pos;
     
     if left_clicked {
       let path = self.map.get_path();
@@ -230,82 +274,81 @@ impl Scene for GameScreen {
       };
       
       self.foods.push(Food::new(id, Vector3::new(food_pos.x, 0.0, food_pos.y), 5, "Strawberry".to_string(), path, tile_loc));
-      let fov = 60.0;
-      let aspect = self.data().window_dim.x / self.data().window_dim.y;
-      let near = 0.1;
-      let far = 256.0;
-     // let f = (math::to_radians(fov) / 2.0).cot();
-      let perspective = PerspectiveFov {
-        fovy: Deg(fov).into(),
-        aspect,
-        near,
-        far,
-      };
-      let perspective = perspective.to_perspective();
       
-      let (c_pos, c_center, c_up) = self.camera.get_look_at();
-      
-      let view = Matrix4::look_at(Point3::new(c_pos.x, c_pos.y, c_pos.z), 
-                                  Point3::new(c_center.x, c_center.y, c_center.z), c_up);
-      
-      let invt_view = view.invert().unwrap();
-      let invt_perspective = Matrix4::from(perspective).invert().unwrap();
-      
-      let mouse_position = mouse;
-      let mut temp_cam = self.camera.clone();
-      
-      // normalise mouse coords
-      let x = (2.0*mouse_position.x) / self.data.window_dim.x - 1.0;
-      let y = -(2.0*mouse_position.y) / self.data.window_dim.y + 1.0;
-      
-      let mut clip_coords = Vector4::new(x, y, -1.0, 1.0);
-      
-      // clip to eye space
-      let eye_matrix = invt_perspective * clip_coords;
-      let eye_coords = Vector4::new(eye_matrix.x, eye_matrix.y, -1.0, 0.0);
-      
-      let world_matrix = invt_view * eye_coords;
-      let mouse_ray = Vector3::new(world_matrix.x, world_matrix.y, world_matrix.z).normalize();
-      
-      if mouse_ray.y < 0.0 {
-        let mut crnt_pos = temp_cam.get_position();
-        while crnt_pos.y > 0.0 {
-          crnt_pos += mouse_ray;
-        }
-        crnt_pos -= mouse_ray;
-        
-        let pix_x = crnt_pos.x;
-        let pix_y = crnt_pos.z;
-        let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
-        self.ray_position = Vector2::new(pix_x, pix_y);
-        self.map.highlight_hex(clicked_hex);
-      }
-    }
-    
-    if self.data().window_resized {
-      self.mut_data().next_scene = true;
-    }
-    
-    self.update_keypresses(escape_pressed);
-    match self.update_controller_input() {
-      (w, a, s, d, x_offset, y_offset) => {
-        // First person setup
-        if w { w_pressed = w; }
-        if a { a_pressed = a; }
-        if s { s_pressed = s; }
-        if d { d_pressed = d; }
-        self.camera.process_mouse_movement(x_offset, y_offset);
-      }
-    }
-    
-    if left_clicked {
       if self.last_mouse_pos != Vector2::new(-1.0, -1.0) {
         let x_offset = self.last_mouse_pos.x - mouse.x;
         let y_offset = mouse.y - self.last_mouse_pos.y;
         self.camera.process_mouse_movement(x_offset, y_offset);
       }
     }
-    self.last_mouse_pos = mouse;
+  }
+  
+  pub fn update_ui(&mut self, delta_time: f32) {
+    
+  }
+  
+  pub fn update_placing(&mut self, delta_time: f32) {
+    let left_clicked = self.data.left_mouse;
+    let mouse = self.data.mouse_pos;
+    
+    let mouse_ray = self.camera.mouse_to_world_ray(mouse, self.data.window_dim);
+    if mouse_ray.y < 0.0 {
+      let mut crnt_pos = self.camera.get_position();
+      while crnt_pos.y > 0.0 {
+        crnt_pos += mouse_ray;
+      }
+      crnt_pos -= mouse_ray;
+      
+      let pix_x = crnt_pos.x;
+      let pix_y = crnt_pos.z;
+      let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+      let q = clicked_hex.q();
+      let r =  clicked_hex.r();
+      
+      if let Some(appliance) = &mut self.placing_appliance {
+        appliance.set_qr_location(q,r, &self.map);
+        if let Some(hex) = self.map.get_hex_from_qr(q,r) {
+          if !hex.is_path() {
+            self.valid_place = true;
+          } else {
+            self.valid_place = false;
+          }
+        } else {
+          self.valid_place = false;
+        }
+      }
+      
+      if self.placing_appliance.is_some() {
+        let appliance = self.placing_appliance.clone().unwrap();
+        
+        if left_clicked {
+          self.ray_position = Vector2::new(pix_x, pix_y);
+          
+          let opt_hex = self.map.get_hex_from_qr(q,r);
+          if let Some(hex) = opt_hex {
+            if hex.is_open() {
+              self.appliances.push(appliance);
+              self.map.set_hexagon_type(q,r,HexagonType::Closed);
+              self.valid_place = false;
+              self.placing_appliance = None;
+              self.mouse_state = MouseState::World;
+              println!("World mode");
+            }
+          }
+        }
+      }
+    } else {
+      self.valid_place = false;
+    }
+  }
+  
+  pub fn update_neutral(&mut self, delta_time: f32) {
+    let space_pressed = self.data().keys.space_pressed();
+    let scroll_delta = self.data().scroll_delta;
+    
+    if self.data.window_resized || self.bin >= 100 {
+      self.data.next_scene = true;
+    }
     
     if self.space_pressed_last_frame && !space_pressed {
       self.space_pressed_last_frame = false;
@@ -335,36 +378,19 @@ impl Scene for GameScreen {
     }
     self.space_pressed_last_frame = space_pressed;
     
-    
-    if p_pressed {
-      self.game_speed = 0;
-    }
-    
-    if w_pressed {
-      self.camera.process_movement(camera::Direction::YAlignedForward, delta_time);
-    }
-    if a_pressed {
-      self.camera.process_movement(camera::Direction::YAlignedLeft, delta_time);
-    }
-    if s_pressed {
-      self.camera.process_movement(camera::Direction::YAlignedBackward, delta_time);
-    }
-    if d_pressed {
-      self.camera.process_movement(camera::Direction::YAlignedRight, delta_time);
-    }
-    if r_pressed {
-      self.camera.process_movement(camera::Direction::PositiveY, delta_time);
-    }
-    if f_pressed {
-      self.camera.process_movement(camera::Direction::NegativeY, delta_time);
-    }
-    
     if scroll_delta > 0.0 {
       self.camera.process_movement(camera::Direction::Forward, DELTA_STEP);
     } else if scroll_delta < 0.0 {
       self.camera.process_movement(camera::Direction::Backward, DELTA_STEP);
     }
     
+    let window_dimensions = self.data().window_dim;
+    
+    self.screen_offset.x=(window_dimensions.x*self.zoom)*0.5;
+    self.screen_offset.y=(window_dimensions.y*self.zoom)*0.5;
+  }
+  
+  pub fn update_objects(&mut self, delta_time: f32) {
     let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
     for _ in 0..delta_steps {
      // println!("Update is happening: {}", self.total_delta);
@@ -373,17 +399,55 @@ impl Scene for GameScreen {
      let weapons = &mut self.weapons;
      let m_sizes = &mut self.data.model_sizes;
      let map = &self.map;
+     let bin = &mut self.bin;
      
       update_game(map, appliances, foods, weapons, m_sizes, DELTA_STEP);
-      collisions(map, foods, weapons, m_sizes, DELTA_STEP);
+      collisions(map, foods, weapons, m_sizes, bin, DELTA_STEP);
       
       self.total_delta -= DELTA_STEP;
     }
+  }
+}
+
+impl Scene for GameScreen {
+  fn data(&self) -> &SceneData {
+    &self.data
+  }
+  
+  fn mut_data(&mut self) -> &mut SceneData {
+    &mut self.data
+  }
+  
+  fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
+    if self.data().window_resized {
+      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.appliances.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone(), self.weapons.clone(), self.game_speed, self.bin))
+    } else {
+      Box::new(MenuScreen::new(window_size, self.data.model_sizes.clone()))
+    }
+  }
+  
+  fn update(&mut self, delta_time: f32) {
+    let delta_time = delta_time * self.game_speed as f32;
+    self.mut_data().controller.update();
+    self.total_delta += delta_time;
     
-    let window_dimensions = self.data().window_dim;
+    match &mut self.mouse_state {
+      MouseState::Ui => {
+        self.update_ui(delta_time);
+      },
+      MouseState::World => {
+        self.update_world(delta_time);
+      },
+      MouseState::Placing => {
+        self.update_placing(delta_time);
+      }
+    }
     
-    self.screen_offset.x=(window_dimensions.x*self.zoom)*0.5;
-    self.screen_offset.y=(window_dimensions.y*self.zoom)*0.5;
+    self.update_keypresses(delta_time);
+    
+    self.update_objects(delta_time);
+    
+    self.update_neutral(delta_time);
   }
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
@@ -406,12 +470,28 @@ impl Scene for GameScreen {
     
     self.map.draw(draw_calls);
     
+    match self.mouse_state {
+      MouseState::Placing => {
+        if let Some(appliance) = &self.placing_appliance {
+          if self.valid_place {
+            appliance.draw(draw_calls);
+          }
+        }
+      },
+      _ => {},
+    }
+    
     draw_calls.push(DrawCall::draw_model(Vector3::new(self.ray_position.x, 0.0, self.ray_position.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
     
     /* 
     ** UI
     */
-    
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, self.data.window_dim.y-96.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Bin is ".to_owned() + &(self.bin).to_string() + "% full.", 
+                                           "Arial".to_string()));
+                                           
     // Game Speed
     draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(64.0, 16.0), 
                                            Vector2::new(196.0, 196.0), 

@@ -3,6 +3,7 @@ use std::io::{BufRead, BufReader};
 
 use crate::modules::hexagon::Hexagon;
 use crate::modules::hexagon::Layout;
+use crate::modules::hexagon::HexagonType;
 
 use maat_graphics::DrawCall;
 
@@ -143,6 +144,40 @@ impl Map {
   
   pub fn get_qr_from_index(&self, idx: usize) -> Vector2<i32> {
     Vector2::new(self.map[idx].q(), self.map[idx].r())
+  }
+  
+  pub fn get_index_from_qr(&self, q: i32, r: i32) -> Option<usize> {
+    let test_hex = Hexagon::new(q,r,"".to_string());
+    
+    let mut idx = None;
+    
+    for i in 0..self.map.len() {
+      if Hexagon::hex_equals(test_hex.clone(), self.map[i].clone()) {
+        idx = Some(i as usize);
+        break;
+      }
+    }
+    
+    idx
+  }
+  
+  pub fn get_hex_from_qr(&self, q: i32, r: i32) -> Option<Hexagon> {
+    let some_idx = self.get_index_from_qr(q, r);
+    
+    let mut hex = None;
+    if let Some(idx) = some_idx {
+      hex = Some(self.map[idx].clone());
+    }
+    
+    hex
+  }
+  
+  pub fn set_hexagon_type(&mut self, q: i32, r: i32, hex_type: HexagonType) {
+    let some_idx = self.get_index_from_qr(q, r);
+    
+    if let Some(idx) = some_idx {
+      self.map[idx].set_type(hex_type);
+    }
   }
   
   pub fn highlight_hex(&mut self, light_hex: Hexagon) {

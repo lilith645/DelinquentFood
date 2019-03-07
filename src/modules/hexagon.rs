@@ -12,7 +12,7 @@ const B2: f32 = 0.0;
 const B3: f32 = 2.0 / 3.0;
 
 #[derive(Clone, PartialEq)]
-enum HexagonType {
+pub enum HexagonType {
   Start,
   End,
   Path,
@@ -201,6 +201,10 @@ impl Hexagon {
     }
   }
   
+  pub fn set_type(&mut self, hex_type: HexagonType) {
+    self.hex_type = hex_type;
+  }
+  
   pub fn is_path(&self) -> bool {
     self.hex_type == HexagonType::Path || self.is_start() || self.is_end()
   }
@@ -234,6 +238,10 @@ impl Hexagon {
   pub fn set_as_path(&mut self) {
     self.model = "GreenHexagon".to_string();
     self.hex_type = HexagonType::Path;
+  }
+  
+  pub fn is_open(&self) -> bool {
+    self.hex_type == HexagonType::Open
   }
   
   pub fn get_model(&self) -> String {

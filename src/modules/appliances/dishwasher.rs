@@ -1,7 +1,7 @@
 use maat_graphics::DrawCall;
 
 use crate::modules::food::Food;
-use crate::modules::appliances::traits::Appliance;
+use crate::modules::appliances::traits::{Appliance, TargetPriority};
 use crate::modules::weapons::{Weapon, Dish};
 use crate::modules::map::Map;
 use crate::modules::hexagon::Hexagon;
@@ -19,6 +19,7 @@ pub struct Dishwasher {
   range: u32,
   charge: f32,
   fire_rate: f32,
+  target: TargetPriority,
 }
 
 impl Dishwasher {
@@ -35,6 +36,7 @@ impl Dishwasher {
       range: 3,
       charge: 0.0,
       fire_rate: 1.0,
+      target: TargetPriority::First,
     }
   }
 }
@@ -52,7 +54,7 @@ impl Appliance for Dishwasher {
       }
     }
     
-    for food in foods {
+    for food in foods.iter() {
       let location = food.get_tile_location();
       let dist = Hexagon::hex_distance(Hexagon::new(self.tile_location.x, self.tile_location.y, "".to_string()), Hexagon::new(location.x, location.y, "".to_string()));
       
@@ -70,10 +72,17 @@ impl Appliance for Dishwasher {
           
           self.charge = 0.0;
         }
+        break;
       }
     }
     
     self.charge += delta_time;
+  }
+  
+  fn set_qr_location(&mut self, q: i32, r: i32, map: &Map) {
+    let pos = map.get_tile_position(q, r);
+    self.position.x = pos.x;
+    self.position.z = pos.y;
   }
   
   fn fire(&mut self) {
