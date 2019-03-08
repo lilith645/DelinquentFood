@@ -154,9 +154,9 @@ impl GameScreen {
   }
   
   pub fn update_keypresses(&mut self, delta_time: f32) {
-    let escape_pressed = self.data().keys.escape_pressed();
     let mouse = self.data.mouse_pos;
     
+    let escape_pressed = self.data().keys.escape_pressed();
     let mut one_pressed = self.data.keys.one_pressed();
     let mut two_pressed = self.data.keys.two_pressed();
     let mut w_pressed = self.data.keys.w_pressed();
@@ -166,12 +166,6 @@ impl GameScreen {
     let r_pressed = self.data().keys.r_pressed();
     let f_pressed = self.data().keys.f_pressed();
     let p_pressed = self.data().keys.p_pressed();
-    
-    
-    if self.escaped_pressed_last_frame && !escape_pressed {
-      self.escaped_pressed_last_frame = false;
-      self.mut_data().next_scene = true;
-    }
     
     self.escaped_pressed_last_frame = escape_pressed;
     
@@ -211,7 +205,28 @@ impl GameScreen {
       self.camera.process_movement(camera::Direction::NegativeY, delta_time);
     }
     if one_pressed {
-      self.placing_appliance = Some(Box::new(Dishwasher::new(Vector2::new(0,0), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &self.map)));
+      let mouse_ray = self.camera.mouse_to_world_ray(mouse, self.data.window_dim);
+      
+      let mut q = 0;
+      let mut r = 0;
+      if mouse_ray.y < 0.0 {
+        let mut crnt_pos = self.camera.get_position();
+        while crnt_pos.y > 0.0 {
+          crnt_pos += mouse_ray;
+        }
+        crnt_pos -= mouse_ray;
+        
+        let pix_x = crnt_pos.x;
+        let pix_y = crnt_pos.z;
+        let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+        q = clicked_hex.q();
+        r =  clicked_hex.r();
+        self.valid_place = self.map.is_valid_qr(q,r);
+      } else {
+        self.valid_place = false;
+      }
+      
+     self.placing_appliance = Some(Box::new(Dishwasher::new(Vector2::new(q,r), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &self.map)));
       if let Some(appliance) = &mut self.placing_appliance {
         let foods = &mut self.foods;
         let weapons = &mut self.weapons;
@@ -223,7 +238,28 @@ impl GameScreen {
       self.mouse_state = MouseState::Placing;
     }
     if two_pressed {
-      self.placing_appliance = Some(Box::new(Fridge::new(Vector2::new(0,0), Vector3::new(3.0, 3.0, 3.0), Vector3::new(0.0, 0.0, 0.0), &self.map)));
+      let mouse_ray = self.camera.mouse_to_world_ray(mouse, self.data.window_dim);
+      
+      let mut q = 0;
+      let mut r = 0;
+      if mouse_ray.y < 0.0 {
+        let mut crnt_pos = self.camera.get_position();
+        while crnt_pos.y > 0.0 {
+          crnt_pos += mouse_ray;
+        }
+        crnt_pos -= mouse_ray;
+        
+        let pix_x = crnt_pos.x;
+        let pix_y = crnt_pos.z;
+        let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+        q = clicked_hex.q();
+        r =  clicked_hex.r();
+        self.valid_place = self.map.is_valid_qr(q,r);
+      } else {
+        self.valid_place = false;
+      }
+      
+      self.placing_appliance = Some(Box::new(Fridge::new(Vector2::new(q,r), Vector3::new(3.0, 3.0, 3.0), Vector3::new(0.0, 0.0, 0.0), &self.map)));
       if let Some(appliance) = &mut self.placing_appliance {
         let foods = &mut self.foods;
         let weapons = &mut self.weapons;
@@ -277,6 +313,12 @@ impl GameScreen {
   pub fn update_world(&mut self, delta_time: f32) {
     let left_clicked = self.data.left_mouse;
     let mouse = self.data.mouse_pos;
+    let escape_pressed = self.data().keys.escape_pressed();
+    
+    if self.escaped_pressed_last_frame && !escape_pressed {
+      self.escaped_pressed_last_frame = false;
+      self.mut_data().next_scene = true;
+    }
     
     if left_clicked {
       if self.last_mouse_pos != Vector2::new(-1.0, -1.0) {
@@ -294,6 +336,13 @@ impl GameScreen {
   pub fn update_placing(&mut self, delta_time: f32) {
     let left_clicked = self.data.left_mouse;
     let mouse = self.data.mouse_pos;
+    let escape_pressed = self.data().keys.escape_pressed();
+    
+    if self.escaped_pressed_last_frame && !escape_pressed {
+      self.escaped_pressed_last_frame = false;
+      self.mouse_state = MouseState::World;
+      return;
+    }
     
     let mouse_ray = self.camera.mouse_to_world_ray(mouse, self.data.window_dim);
     if mouse_ray.y < 0.0 {
@@ -311,15 +360,7 @@ impl GameScreen {
       
       if let Some(appliance) = &mut self.placing_appliance {
         appliance.set_qr_location(q,r, &self.map);
-        if let Some(hex) = self.map.get_hex_from_qr(q,r) {
-          if !hex.is_path() {
-            self.valid_place = true;
-          } else {
-            self.valid_place = false;
-          }
-        } else {
-          self.valid_place = false;
-        }
+        self.valid_place = self.map.is_valid_qr(q,r);
       }
       
       if self.placing_appliance.is_some() {
@@ -514,7 +555,7 @@ impl Scene for GameScreen {
               let position = Vector3::new(location.x, 0.1, location.y);
               let height = 1.2;
               draw_calls.push(DrawCall::draw_hologram_model(position,
-                                                   Vector3::new(8.0/4.0, height, 8.0/4.0),
+                                                   Vector3::new(7.9/4.0, height, 7.9/4.0),
                                                    Vector3::new(0.0, 90.0, 0.0), 
                                                    hexagon.get_model()));
             }
@@ -539,7 +580,17 @@ impl Scene for GameScreen {
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Wave: ".to_owned() + &(self.the_food_store.wave_number()).to_string(), 
                                            "Arial".to_string()));
-                                           
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key 1: Spawn Dishwasher".to_string(), 
+                                           "Arial".to_string()));
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-32.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key 2: Spawn Fridge".to_string(), 
+                                           "Arial".to_string()));
+    
     // Game Speed
     draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(64.0, 16.0), 
                                            Vector2::new(196.0, 196.0), 

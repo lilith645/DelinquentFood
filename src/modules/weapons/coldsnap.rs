@@ -11,8 +11,15 @@ pub struct ColdSnap {
 
 impl ColdSnap {
   pub fn new() -> ColdSnap {
+    let velocity = 0.0;
+    let rotation_velocity = Vector3::new(0.0, 0.0, 0.0);
+    let damage = 1;
+    let pierce = 1;
+    let timer = 0.6;
+    let scale = Vector3::new(1.9, 0.6, 1.9);
+    let debuff = vec!(Debuff::Slow(1.0));
     ColdSnap {
-      data: WeaponData::new(0.0, 1, 1, 0.6, Vector3::new(1.9, 0.6, 1.9), WeaponType::Tile, vec!(Debuff::Slow(1.0)), "BlueHexagon".to_string()),
+      data: WeaponData::new(velocity, rotation_velocity, damage, pierce, timer, scale, WeaponType::Tile, debuff, "BlueHexagon".to_string()),
     }
   }
 }

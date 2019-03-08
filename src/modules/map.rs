@@ -172,6 +172,17 @@ impl Map {
     hex
   }
   
+  pub fn is_valid_qr(&self, q: i32, r: i32) -> bool {
+    let mut is_valid = false;
+    if let Some(hex) = self.get_hex_from_qr(q,r) {
+      if !hex.is_path() {
+        is_valid = true;
+      }
+    }
+    
+    is_valid
+  }
+  
   pub fn set_hexagon_type(&mut self, q: i32, r: i32, hex_type: HexagonType) {
     let some_idx = self.get_index_from_qr(q, r);
     

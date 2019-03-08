@@ -35,6 +35,7 @@ struct WeaponData {
   size: Vector3<f32>,
   direction: Vector2<f32>,
   velocity: f32,
+  rotation_velocity: Vector3<f32>,
   damage: i32,
   pierce: i32,
   debuffs: Vec<Debuff>,
@@ -45,7 +46,7 @@ struct WeaponData {
 }
 
 impl WeaponData {
-  pub fn new(vel: f32, dmg: i32, prc: i32, timer: f32, sz: Vector3<f32>, w_type: WeaponType, debuffs: Vec<Debuff>, model: String) -> WeaponData {
+  pub fn new(vel: f32, rot_vel: Vector3<f32>, dmg: i32, prc: i32, timer: f32, sz: Vector3<f32>, w_type: WeaponType, debuffs: Vec<Debuff>, model: String) -> WeaponData {
     WeaponData {
       position: Vector3::new(0.0, 0.0, 0.0),
       tile_position: Vector2::new(0,0),
@@ -53,6 +54,7 @@ impl WeaponData {
       size: sz,
       direction: Vector2::new(0.0, 0.0),
       velocity: vel,
+      rotation_velocity: rot_vel,
       damage: dmg,
       pierce: prc,
       debuffs,
@@ -111,6 +113,9 @@ pub trait Weapon: WeaponClone {
       WeaponType::Projectile => {
         self.mut_data().position.x += self.data().velocity*self.data().direction.x*delta_time;
         self.mut_data().position.z += self.data().velocity*self.data().direction.y*delta_time;
+        self.mut_data().rotation.x += self.data().rotation_velocity.x*delta_time;
+        self.mut_data().rotation.y += self.data().rotation_velocity.y*delta_time;
+        self.mut_data().rotation.z += self.data().rotation_velocity.z*delta_time;
       },
       WeaponType::Tile => {
         self.mut_data().timer -= delta_time;

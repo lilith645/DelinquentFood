@@ -19,15 +19,14 @@ impl FoodStore {
     let path = map.get_path();
     let food_pos = map.tile_position_from_index(path[0] as usize);
     let tile_loc = map.get_qr_from_index(path[0] as usize);
-    let strawberry = Food::new(0, Vector3::new(food_pos.x, 0.0, food_pos.y), 20, "Strawberry".to_string(), path, tile_loc);
     
     let mut wave1 = Vec::new();
     for i in 0..40 {
-      wave1.push((strawberry.clone(), i as f32*1.0));
+      wave1.push((Food::new(i, Vector3::new(food_pos.x, 0.0, food_pos.y), 20, "Strawberry".to_string(), path.clone(), tile_loc), i as f32*1.0));
     }
     let mut wave2 = Vec::new();
     for i in 0..120 {
-      wave2.push((strawberry.clone(), i as f32*0.5));
+      wave2.push((Food::new(i, Vector3::new(food_pos.x, 0.0, food_pos.y), 20, "Strawberry".to_string(), path.clone(), tile_loc), i as f32*0.5));
     }
     
     FoodStore {

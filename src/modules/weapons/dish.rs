@@ -12,13 +12,14 @@ pub struct Dish {
 impl Dish {
   pub fn new() -> Dish {
     let velocity = 80.0;
+    let rotation_velocity = Vector3::new(360.0, 360.0, 360.0);
     let damage = 3;
     let pierce = 2;
     let timer = 0.0;
-    let scale = Vector3::new(0.5, 0.5, 0.5);
+    let scale = Vector3::new(1.0, 1.0, 1.0);
     let debuff = Vec::new();
     Dish {
-      data: WeaponData::new(velocity, damage, pierce, timer, scale, WeaponType::Projectile, debuff, "Spoon".to_string()),
+      data: WeaponData::new(velocity, rotation_velocity, damage, pierce, timer, scale, WeaponType::Projectile, debuff, "Plate".to_string()),
     }
   }
 }
