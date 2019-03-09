@@ -133,8 +133,10 @@ impl GameScreen {
     let mut a_pressed = self.data.keys.a_pressed();
     let mut s_pressed = self.data.keys.s_pressed();
     let mut d_pressed = self.data.keys.d_pressed();
+    let c_pressed = self.data().keys.c_pressed();
     let r_pressed = self.data().keys.r_pressed();
     let f_pressed = self.data().keys.f_pressed();
+    let m_pressed = self.data().keys.m_pressed();
     let p_pressed = self.data().keys.p_pressed();
     let x_pressed = self.data().keys.x_pressed();
     
@@ -259,6 +261,17 @@ impl GameScreen {
         self.appliances.remove(idx);
         self.selected_appliace = None;
       }
+      // move tower
+      if m_pressed {
+        let mut appliance = self.appliances[idx].clone();
+        appliance.should_draw_range(true);
+        self.placing_appliance = Some(appliance);
+        self.mouse_state = MouseState::Placing;
+      }
+      // Clean tower
+      if c_pressed {
+        self.appliances[idx].clean();
+      }
     }
   }
   
@@ -338,7 +351,7 @@ impl GameScreen {
           if let Some(hex) = some_hex {
             if !hex.is_open() {
               for i in 0..self.appliances.len() {
-                let loc = self.appliances[i].get_qr_locaiton();
+                let loc = self.appliances[i].get_qr_location();
                 if q == loc.x && r == loc.y {
                   // Select appliance
                   found_appliance = true;
@@ -418,6 +431,12 @@ impl GameScreen {
               self.valid_place = false;
               self.placing_appliance = None;
               self.mouse_state = MouseState::World;
+              if let Some(idx) = self.selected_appliace {
+                let qr = self.appliances[idx].get_qr_location();
+                self.map.set_hexagon_type(qr.x, qr.y, HexagonType::Open);
+                self.appliances.remove(idx);
+                self.selected_appliace = Some(self.appliances.len()-1);
+              }
             }
           }
         }
@@ -495,7 +514,11 @@ impl GameScreen {
       collisions(map, foods, weapons, m_sizes, bin, DELTA_STEP);
       
       if self.foods.len() == 0 {
-        self.the_food_store.next_wave();
+        if self.the_food_store.next_wave() {
+          for appliance in &mut self.appliances {
+            appliance.decrease_life_expectancy();
+          }
+        }
       }
       
       self.total_delta -= DELTA_STEP;

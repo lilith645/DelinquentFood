@@ -16,12 +16,13 @@ pub struct Dishwasher {
 impl Dishwasher {
   pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, map: &Map) -> Dishwasher {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
+    let life_expectancy = 2;
     let range = 3;
     let charge = 0.0;
     let fire_rate = 1.0;
     
     Dishwasher {
-      data: ApplianceData::new(tile, size, rotation, "Dishwasher".to_string(), range, fire_rate, charge, map),
+      data: ApplianceData::new(tile, size, rotation, "Dishwasher".to_string(), life_expectancy, range, fire_rate, charge, map),
     }
   }
 }
@@ -75,11 +76,7 @@ impl Appliance for Dishwasher {
     
   }
   
-  fn move_tile(&self) {
-    
-  }
-  
-  fn clean(&self) {
+  fn move_tile(&self, _distance: i32) {
     
   }
   

@@ -27,11 +27,12 @@ pub struct ApplianceData {
   pub fire_rate: f32,
   pub target: TargetPriority,
   pub life_expectancy: i32,
+  pub max_life_expectancy: i32,
   pub draw_range: bool,
 }
 
 impl ApplianceData {
-  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, model: String, rng: u32, fire_rate: f32, charge: f32, map: &Map) -> ApplianceData {
+  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, model: String, life: i32, rng: u32, fire_rate: f32, charge: f32, map: &Map) -> ApplianceData {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
     
     ApplianceData {
@@ -45,7 +46,8 @@ impl ApplianceData {
       charge,
       fire_rate,
       target: TargetPriority::First,
-      life_expectancy: 1,
+      life_expectancy: life,
+      max_life_expectancy: life,
       draw_range: false,
     }
   }
@@ -78,8 +80,7 @@ pub trait Appliance: ApplianceClone {
   fn apply_effect(&self);
   fn remove_effects(&self);
   
-  fn move_tile(&self);
-  fn clean(&self);
+  fn move_tile(&self, distance: i32);
   fn upgrade(&mut self);
   
   fn upgrade_cost(&self) -> u32;
@@ -93,8 +94,24 @@ pub trait Appliance: ApplianceClone {
     self.data().range
   }
   
-  fn get_qr_locaiton(&self) -> Vector2<i32> {
+  fn get_qr_location(&self) -> Vector2<i32> {
     self.data().tile_location
+  }
+  
+  fn decrease_life_expectancy(&mut self) {
+    self.mut_data().life_expectancy -= 1;
+  }
+  
+  fn current_life_expectancy(&self) -> i32 {
+    self.data().life_expectancy
+  }
+  
+  fn max_life_expectancy(&self) -> i32 {
+    self.data().max_life_expectancy
+  }
+  
+  fn clean(&mut self) {
+    self.mut_data().life_expectancy = self.data().max_life_expectancy;
   }
   
   fn rotate_towards(&self, position: Vector3<f32>, food: &Box<Food>, angle_offset: f32) -> f32 {

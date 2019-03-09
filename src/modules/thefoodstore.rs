@@ -31,7 +31,7 @@ impl FoodStore {
       wave2.push((Box::new(Banana::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.5));
     }
     for i in 0..5 {
-      wave2.push((Box::new(Strawberry::new(120+i, food_pos, path.clone(), tile_loc)) as Box<Food>, (121.0+(i as f32*0.25))));
+      wave2.push((Box::new(Strawberry::new(121+i, food_pos, path.clone(), tile_loc)) as Box<Food>, (60.0+(i as f32*0.25))));
     }
     
     FoodStore {
@@ -46,14 +46,18 @@ impl FoodStore {
     self.current_wave
   }
   
-  pub fn next_wave(&mut self) {
+  pub fn next_wave(&mut self) -> bool {
+    let mut next_wave_started = false;
     if self.current_wave < self.waves.len() {
       if self.waves[self.current_wave].len() == self.current_idx {
+        next_wave_started = true;
         self.current_wave += 1;
         self.current_idx = 0;
         self.wave_delta = 0.0;
       }
     }
+    
+    next_wave_started
   }
   
   pub fn update(&mut self, delta_time: f32) -> Option<Box<Food>> {

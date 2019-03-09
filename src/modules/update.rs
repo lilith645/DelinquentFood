@@ -12,8 +12,17 @@ pub fn update_game(map: &Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut 
     food.update(map, delta_time);
   }
   
-  for appliance in &mut appliances.iter_mut() {
-    appliance.update(foods, weapons, model_sizes, map, delta_time);
+  let mut offset = 0;
+  for i in 0..appliances.len() {
+    if offset > i {
+      break;
+    }
+    
+    appliances[i-offset].update(foods, weapons, model_sizes, map, delta_time);
+    if appliances[i-offset].current_life_expectancy() <= 0 {
+      appliances.remove(i-offset);
+      offset += 1;
+    }
   }
   
   let mut dead_weapons = Vec::new();

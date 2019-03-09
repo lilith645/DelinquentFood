@@ -10,7 +10,7 @@ pub struct Banana {
 
 impl Banana {
   pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Banana {
-    let health = 2000;
+    let health = 20;
     let speed = 15.0;
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
