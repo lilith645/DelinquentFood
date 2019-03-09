@@ -1,4 +1,4 @@
-use crate::modules::food::{Food, Strawberry};
+use crate::modules::food::{Food, Strawberry, Banana};
 use crate::modules::map::Map;
 
 
@@ -21,12 +21,17 @@ impl FoodStore {
     let tile_loc = map.get_qr_from_index(path[0] as usize);
     
     let mut wave1 = Vec::new();
-    for i in 0..40 {
-      wave1.push((Box::new(Strawberry::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*1.0));
+    for i in 0..39 {
+      wave1.push((Box::new(Banana::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32));
     }
+    wave1.push((Box::new(Strawberry::new(40, food_pos, path.clone(), tile_loc)) as Box<Food>, 40.0));
+    
     let mut wave2 = Vec::new();
     for i in 0..120 {
-      wave2.push((Box::new(Strawberry::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.5));
+      wave2.push((Box::new(Banana::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.5));
+    }
+    for i in 0..5 {
+      wave2.push((Box::new(Strawberry::new(120+i, food_pos, path.clone(), tile_loc)) as Box<Food>, (121.0+(i as f32*0.25))));
     }
     
     FoodStore {

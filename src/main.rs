@@ -76,6 +76,7 @@ fn main() {
   graphics.add_model("GreenHexagon".to_string(), "./windys-modeling-agency/Unfinished/GreenHexagon.glb".to_string());
   graphics.add_model("PurpleHexagon".to_string(), "./windys-modeling-agency/Unfinished/PurpleHexagon.glb".to_string());
   graphics.add_model("RedHexagon".to_string(), "./windys-modeling-agency/Unfinished/RedHexagon.glb".to_string());
+  graphics.add_model("Bombard".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
   
   // Towers
   graphics.add_model("Fridge".to_string(), "./windys-modeling-agency/Unfinished/Fridge.glb".to_string());
@@ -87,6 +88,7 @@ fn main() {
   
   // Enemies
   graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Strawberry.glb".to_string());
+  graphics.add_model("Banana".to_string(), "./windys-modeling-agency/Unfinished/Banana.glb".to_string());
   
   graphics.create_instance_buffer("EntityBuffer".to_string());
   

@@ -1,3 +1,7 @@
+use maat_graphics::DrawCall;
+
+use crate::modules::map::Map;
+
 use cgmath::{Vector2, Vector3};
 
 // Orientation information
@@ -69,6 +73,14 @@ impl Layout {
       size,
       path: Vec::new(),
     }
+  }
+  
+  pub fn set_origin(&mut self, new_origin: Vector2<f32>) {
+    self.origin = new_origin;
+  }
+  
+  pub fn get_origin(&self) -> Vector2<f32> {
+    self.origin
   }
   
   fn round_to_nearest_hex(q: f32, r: f32) -> Hexagon {
@@ -262,6 +274,28 @@ impl Hexagon {
   
   pub fn length(&self) -> i32 {
     (((self.position.x).abs() + (self.position.y).abs() + (self.position.z).abs()) as f32 * 0.5) as i32
+  }
+  
+  pub fn draw_hologram(&self, map: &Map, layout: &Layout, height: f32, draw_calls: &mut Vec<DrawCall>) {
+    let position = layout.hex_to_pixel(self.clone());
+    
+    let radius = map.get_radius();
+    
+    draw_calls.push(DrawCall::draw_hologram_model(Vector3::new(position.x, height, position.y),
+                                           Vector3::new(radius as f32/4.0, height, radius as f32/4.0),
+                                           Vector3::new(0.0, 90.0, 0.0), 
+                                           self.model.to_string()));
+  }
+  
+  pub fn draw(&self, map: &Map, layout: &Layout, height: f32, draw_calls: &mut Vec<DrawCall>) {
+    let position = layout.hex_to_pixel(self.clone());
+    
+    let radius = map.get_radius();
+    
+    draw_calls.push(DrawCall::draw_model(Vector3::new(position.x, height, position.y),
+                                           Vector3::new(radius as f32/4.0, height, radius as f32/4.0),
+                                           Vector3::new(0.0, 90.0, 0.0), 
+                                           self.model.to_string()));
   }
   
   pub fn hex_distance(hexagon: Hexagon, other_hexagon: Hexagon) -> i32 {

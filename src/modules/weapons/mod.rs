@@ -21,14 +21,14 @@ pub enum Debuff {
 }
 
 #[derive(Clone)]
-enum WeaponType {
+pub enum WeaponType {
   Tile,
   Projectile,
   AntiFood,
 }
 
 #[derive(Clone)]
-struct WeaponData {
+pub struct WeaponData {
   position: Vector3<f32>,
   tile_position: Vector2<i32>,
   rotation: Vector3<f32>,

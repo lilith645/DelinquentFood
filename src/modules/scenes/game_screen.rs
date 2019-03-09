@@ -49,6 +49,7 @@ pub struct GameScreen {
   mouse_state: MouseState,
   bin: i32,
   placing_appliance: Option<Box<Appliance>>,
+  selected_appliace: Option<usize>,
   valid_place: bool,
   the_food_store: FoodStore,
 }
@@ -64,39 +65,6 @@ impl GameScreen {
     camera.set_move_speed(50.0);
     
     let map = Map::new();
-    
-    //let tile_pos = map.get_next_path(0) as usize;
-   // let square_pos = map.get_path_position(tile_pos);
-    
-  //  let start_pos = Vector3::new(square_pos.x as f32, 0.0, square_pos.y as f32);
-    
-   // let position = map.get_tile_position(3, 3);
-    let dishwasher = Box::new(Dishwasher::new(Vector2::new(2,2), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &map));
-    let dishwasher2 = Box::new(Dishwasher::new(Vector2::new(-2,-3), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &map));
-    
-    /*
-    // Ranges
-    let mut hexagons: Vec<Hexagon> = Vec::new();
-    
-    let radius = 8;
-    for q in -radius..radius+1 {
-      let r1 = (-radius).max(-q - radius);
-      let r2 = radius.min(-q + radius);
-      
-      for r in r1..r2+1 {
-        let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
-        let mut texture = "Hexagon".to_string();
-        match dist {
-          0 => { texture = "BlueHexagon".to_string(); },
-          1 => { texture = "GreenHexagon".to_string(); },
-          2 => { texture = "PurpleHexagon".to_string(); },
-          3 => { texture = "RedHexagon".to_string(); },
-          _ => {}
-        }
-        
-        hexagons.push(Hexagon::new(q, r, texture.to_string()));
-      }
-    }*/
     
     let path = map.get_path();
     let food_pos = map.tile_position_from_index(path[0] as usize);
@@ -114,7 +82,7 @@ impl GameScreen {
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
       map,
-      appliances: vec!(dishwasher, dishwasher2),
+      appliances: Vec::new(),
       foods: vec!(),
       weapons: Vec::new(),
       ray_position: Vector2::new(0.0, 0.0),
@@ -122,6 +90,7 @@ impl GameScreen {
       mouse_state: MouseState::World,
       bin: 0,
       placing_appliance: None,
+      selected_appliace: None,
       valid_place: false,
       the_food_store: store,
     }
@@ -148,6 +117,7 @@ impl GameScreen {
       mouse_state: MouseState::World,
       bin,
       placing_appliance: None,
+      selected_appliace: None,
       valid_place: false,
       the_food_store,
     }
@@ -166,6 +136,7 @@ impl GameScreen {
     let r_pressed = self.data().keys.r_pressed();
     let f_pressed = self.data().keys.f_pressed();
     let p_pressed = self.data().keys.p_pressed();
+    let x_pressed = self.data().keys.x_pressed();
     
     self.escaped_pressed_last_frame = escape_pressed;
     
@@ -234,6 +205,11 @@ impl GameScreen {
         let map = &self.map;
         
         appliance.update(foods, weapons, m_sizes, map, 0.0);
+        appliance.should_draw_range(true);
+        if self.selected_appliace.is_some() {
+          self.appliances[self.selected_appliace.unwrap()].should_draw_range(false);
+        }
+        self.selected_appliace = None;
       }
       self.mouse_state = MouseState::Placing;
     }
@@ -267,8 +243,22 @@ impl GameScreen {
         let map = &self.map;
         
         appliance.update(foods, weapons, m_sizes, map, 0.0);
+        appliance.should_draw_range(true);
+        
+        if self.selected_appliace.is_some() {
+          self.appliances[self.selected_appliace.unwrap()].should_draw_range(false);
+        }
+        self.selected_appliace = None;
       }
       self.mouse_state = MouseState::Placing;
+    }
+    
+    if let Some(idx) = self.selected_appliace {
+      // Sell tower
+      if x_pressed {
+        self.appliances.remove(idx);
+        self.selected_appliace = None;
+      }
     }
   }
   
@@ -326,6 +316,56 @@ impl GameScreen {
         let y_offset = mouse.y - self.last_mouse_pos.y;
         self.camera.process_mouse_movement(x_offset, y_offset);
       }
+      
+      let mouse_ray = self.camera.mouse_to_world_ray(mouse, self.data.window_dim);
+      if mouse_ray.y < 0.0 {
+        let mut crnt_pos = self.camera.get_position();
+        while crnt_pos.y > 0.0 {
+          crnt_pos += mouse_ray;
+        }
+        crnt_pos -= mouse_ray;
+        
+        let pix_x = crnt_pos.x;
+        let pix_y = crnt_pos.z;
+        let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+        let q = clicked_hex.q();
+        let r =  clicked_hex.r();
+        
+        let mut found_appliance = false;
+        
+        if self.map.is_valid_qr(q,r) {
+          let some_hex = self.map.get_hex_from_qr(q, r);
+          if let Some(hex) = some_hex {
+            if !hex.is_open() {
+              for i in 0..self.appliances.len() {
+                let loc = self.appliances[i].get_qr_locaiton();
+                if q == loc.x && r == loc.y {
+                  // Select appliance
+                  found_appliance = true;
+                  if self.selected_appliace.is_some() {
+                    if i == self.selected_appliace.unwrap() {
+                      break;
+                    }
+                    
+                    self.appliances[self.selected_appliace.unwrap()].should_draw_range(false);
+                  }
+                  
+                  self.selected_appliace = Some(i);
+               //   self.appliances[i].should_draw_range(true);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        
+        if !found_appliance {
+          if self.selected_appliace.is_some() {
+            self.appliances[self.selected_appliace.unwrap()].should_draw_range(false);
+          }
+          self.selected_appliace = None;
+        }
+      }
     }
   }
   
@@ -364,7 +404,7 @@ impl GameScreen {
       }
       
       if self.placing_appliance.is_some() {
-        let appliance = self.placing_appliance.clone().unwrap();
+        let mut appliance = self.placing_appliance.clone().unwrap();
         
         if left_clicked {
           self.ray_position = Vector2::new(pix_x, pix_y);
@@ -372,6 +412,7 @@ impl GameScreen {
           let opt_hex = self.map.get_hex_from_qr(q,r);
           if let Some(hex) = opt_hex {
             if hex.is_open() {
+              appliance.should_draw_range(false);
               self.appliances.push(appliance);
               self.map.set_hexagon_type(q,r,HexagonType::Closed);
               self.valid_place = false;
@@ -515,7 +556,8 @@ impl Scene for GameScreen {
     }
     
     for appliance in &self.appliances {
-      appliance.draw(draw_calls);
+      let map = &self.map;
+      appliance.draw(map, draw_calls);
     }
     
     for weapon in &self.weapons {
@@ -528,41 +570,34 @@ impl Scene for GameScreen {
       MouseState::Placing => {
         if let Some(appliance) = &self.placing_appliance {
           if self.valid_place {
-            appliance.draw_hologram(draw_calls);
-            
-            let mut hexagons: Vec<Hexagon> = Vec::new();
-            
-            let radius = appliance.get_range() as i32;
-            for q in -radius..radius+1 {
-              let r1 = (-radius).max(-q - radius);
-              let r2 = radius.min(-q + radius);
-              
-              for r in r1..r2+1 {
-                let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
-                let mut texture = "PurpleHexagon".to_string();
-                
-                hexagons.push(Hexagon::new(q, r, texture.to_string()));
-              }
-            }
-            
-            let pos = appliance.get_position();
-            let origin = Vector2::new(pos.x, pos.z);
-            let layout = Layout::new(origin, Vector2::new(8.0,8.0));
-            
-            for hexagon in hexagons {
-              let location = layout.hex_to_pixel(hexagon.clone());
-         
-              let position = Vector3::new(location.x, 0.1, location.y);
-              let height = 1.2;
-              draw_calls.push(DrawCall::draw_hologram_model(position,
-                                                   Vector3::new(7.9/4.0, height, 7.9/4.0),
-                                                   Vector3::new(0.0, 90.0, 0.0), 
-                                                   hexagon.get_model()));
-            }
+            let map = &self.map;
+            appliance.draw_hologram(map, draw_calls);
           }
         }
       },
-      _ => {},
+      _ => {
+        if let Some(idx) = self.selected_appliace {
+          let map = &self.map;
+          self.appliances[idx].draw_range(map, draw_calls);
+          
+          // UI 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-64.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key X: Sells selected tower".to_string(), 
+                                           "Arial".to_string()));
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-96.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key C: Cleans selected tower".to_string(), 
+                                           "Arial".to_string()));
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key M: Moves selected tower".to_string(), 
+                                           "Arial".to_string()));
+        }
+      },
     }
     
     draw_calls.push(DrawCall::draw_model(Vector3::new(self.ray_position.x, 0.0, self.ray_position.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));

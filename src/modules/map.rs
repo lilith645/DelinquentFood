@@ -105,9 +105,6 @@ impl Map {
   
   pub fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
     for hexagon in &self.map {
-      let location = self.layout.hex_to_pixel(hexagon.clone());
-      
-      let position = Vector3::new(location.x, 0.1, location.y);
       let height = {
         if hexagon.is_path() {
           0.1
@@ -115,10 +112,7 @@ impl Map {
           1.0
         }
       };
-      draw_calls.push(DrawCall::draw_model(position,
-                                           Vector3::new(self.radius as f32/4.0, height, self.radius as f32/4.0),
-                                           Vector3::new(0.0, 90.0, 0.0), 
-                                           hexagon.get_model()));
+      hexagon.draw(&self, &self.layout, height, draw_calls);
     }
   }
   
@@ -128,6 +122,10 @@ impl Map {
   
   pub fn get_path(&self) -> Vec<u32> {
     self.path.clone()
+  }
+  
+  pub fn get_layout(&self) -> Layout {
+    self.layout.clone()
   }
   
   pub fn pixel_to_hex(&self, pix_x: f32, pix_y: f32) -> Hexagon {

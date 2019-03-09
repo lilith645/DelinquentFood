@@ -1,6 +1,8 @@
 pub use self::strawberry::Strawberry;
+pub use self::banana::Banana;
 
 mod strawberry;
+mod banana;
 
 use maat_graphics::DrawCall;
 
@@ -28,17 +30,17 @@ pub struct FoodData {
 }
 
 impl FoodData {
-  pub fn new(id: i32, position: Vector3<f32>, health: i32, model: String, path: Vec<u32>, location: Vector2<i32>) -> FoodData {
+  pub fn new(id: i32, position: Vector3<f32>, rotation: Vector3<f32>, size: Vector3<f32>, speed: f32, health: i32, model: String, path: Vec<u32>, location: Vector2<i32>) -> FoodData {
     FoodData {
       id,
       position,
-      size: Vector3::new(1.0, 1.0, 1.0),
-      rotation: Vector3::new(0.0, 0.0, 0.0),
+      size,
+      rotation,
       model,
       debuffs: Vec::new(),
       path_number: 0,
       path_location: location,
-      speed: 10.0,
+      speed,
       target: position.xz(),
       path,
       health,
@@ -68,8 +70,9 @@ pub trait Food: FoodClone {
   fn data(&self) -> &FoodData;
   fn mut_data(&mut self) -> &mut FoodData;
   
+  fn local_update(&mut self, map: &Map, delta_time: f32);
   fn update(&mut self, map: &Map, delta_time: f32) {
-    if (self.data().position.x-self.data().target.x + self.data().position.z-self.data().target.y).abs() < 0.1 {
+    if (self.data().position.x-self.data().target.x + self.data().position.z-self.data().target.y).abs() < 0.2 {
       self.mut_data().path_number += 1;
       if self.data().path_number >= self.data().path.len() as u32 {
         self.mut_data().health = 0;
@@ -115,15 +118,11 @@ pub trait Food: FoodClone {
       offset += 1;
     }
     
-    self.mut_data().rotation.y += 90.0*delta_time;//angle.0 as f32+90.0;
+    direction.normalize();
     self.mut_data().position.x += direction.x*speed*delta_time;
     self.mut_data().position.z += direction.y*speed*delta_time;
-    self.mut_data().position.y = 1.0 + 2.0*self.data().total_dt.sin();
     
-    self.mut_data().total_dt += delta_time*0.5;
-    if self.data().total_dt > 3.14 {
-      self.mut_data().total_dt -= 3.14;
-    }
+    self.local_update(map, delta_time);
   }
   
   fn get_id(&self) -> i32 {
@@ -143,7 +142,7 @@ pub trait Food: FoodClone {
     if self.data().health <= 0 {
       self.mut_data().cooked = true;
     }
-    println!("id: {}, health: {}", self.data().id, self.data().health);
+   // println!("id: {}, health: {}", self.data().id, self.data().health);
   }
   
   fn apply_debuffs(&mut self, debuffs: Vec<Debuff>) {

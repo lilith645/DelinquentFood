@@ -2,6 +2,7 @@ use maat_graphics::DrawCall;
 use crate::modules::food::Food;
 use crate::modules::weapons::Weapon;
 use crate::modules::map::Map;
+use crate::modules::hexagon::{Layout, Hexagon};
 
 use cgmath::{InnerSpace, Angle, Deg, Vector2, Vector3};
 
@@ -26,6 +27,7 @@ pub struct ApplianceData {
   pub fire_rate: f32,
   pub target: TargetPriority,
   pub life_expectancy: i32,
+  pub draw_range: bool,
 }
 
 impl ApplianceData {
@@ -44,6 +46,7 @@ impl ApplianceData {
       fire_rate,
       target: TargetPriority::First,
       life_expectancy: 1,
+      draw_range: false,
     }
   }
 }
@@ -90,6 +93,10 @@ pub trait Appliance: ApplianceClone {
     self.data().range
   }
   
+  fn get_qr_locaiton(&self) -> Vector2<i32> {
+    self.data().tile_location
+  }
+  
   fn rotate_towards(&self, position: Vector3<f32>, food: &Box<Food>, angle_offset: f32) -> f32 {
     let loc = food.get_location();
     let direction = Vector2::new(loc.x-position.x, loc.y-position.z).normalize();
@@ -105,12 +112,49 @@ pub trait Appliance: ApplianceClone {
     self.mut_data().position.z = pos.y;
   }
   
-  fn draw_hologram(&self, draw_calls: &mut Vec<DrawCall>) {
-    draw_calls.push(DrawCall::draw_hologram_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
+  fn should_draw_range(&mut self, should_draw: bool) {
+    self.mut_data().draw_range = should_draw;
   }
   
-  fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
+  fn draw_range(&self, map: &Map, draw_calls: &mut Vec<DrawCall>) {
+    let mut layout = map.get_layout();
+    let new_origin = Vector2::new(self.data().position.x, self.data().position.z);
+    layout.set_origin(new_origin);
+    
+    // draw hexagons
+    let mut hexagons: Vec<Hexagon> = Vec::new();
+    
+    let radius = self.data().range as i32;
+    for q in -radius..radius+1 {
+      let r1 = (-radius).max(-q - radius);
+      let r2 = radius.min(-q + radius);
+      
+      for r in r1..r2+1 {
+        let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
+        let mut texture = "PurpleHexagon".to_string();
+        
+        hexagons.push(Hexagon::new(q, r, texture.to_string()));
+      }
+    }
+    
+    for hexagon in hexagons {
+      let height = 1.2;
+      hexagon.draw_hologram(map, &layout, height, draw_calls);
+    }
+  }
+  
+  fn draw_hologram(&self, map: &Map, draw_calls: &mut Vec<DrawCall>) {
+    draw_calls.push(DrawCall::draw_hologram_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
+    if self.data().draw_range {
+      self.draw_range(map, draw_calls);
+    }
+  }
+  
+  fn draw(&self, map: &Map, draw_calls: &mut Vec<DrawCall>) {
     draw_calls.push(DrawCall::draw_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
+    if self.data().draw_range {
+      self.draw_range(map, draw_calls);
+    }
   }
 }
 
