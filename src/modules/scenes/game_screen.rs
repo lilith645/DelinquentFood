@@ -49,7 +49,7 @@ pub struct GameScreen {
   mouse_state: MouseState,
   bin: i32,
   placing_appliance: Option<Box<Appliance>>,
-  selected_appliace: Option<usize>,
+  selected_appliance: Option<usize>,
   valid_place: bool,
   the_food_store: FoodStore,
 }
@@ -90,7 +90,7 @@ impl GameScreen {
       mouse_state: MouseState::World,
       bin: 0,
       placing_appliance: None,
-      selected_appliace: None,
+      selected_appliance: None,
       valid_place: false,
       the_food_store: store,
     }
@@ -117,10 +117,51 @@ impl GameScreen {
       mouse_state: MouseState::World,
       bin,
       placing_appliance: None,
-      selected_appliace: None,
+      selected_appliance: None,
       valid_place: false,
       the_food_store,
     }
+  }
+  
+  fn start_placing_tower(&mut self, mouse: Vector2<f32>, appliance: Box<Appliance>) {
+    let mouse_ray = self.camera.mouse_to_world_ray(mouse, self.data.window_dim);
+    
+    let mut q = 0;
+    let mut r = 0;
+    if mouse_ray.y < 0.0 {
+      let mut crnt_pos = self.camera.get_position();
+      while crnt_pos.y > 0.0 {
+        crnt_pos += mouse_ray;
+      }
+      crnt_pos -= mouse_ray;
+      
+      let pix_x = crnt_pos.x;
+      let pix_y = crnt_pos.z;
+      let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+      q = clicked_hex.q();
+      r =  clicked_hex.r();
+      self.valid_place = self.map.is_valid_qr(q,r);
+    } else {
+      self.valid_place = false;
+    }
+    
+    let mut appliance = appliance;
+    appliance.set_qr_location(q,r, &self.map);
+    self.placing_appliance = Some(appliance);
+    if let Some(appliance) = &mut self.placing_appliance {
+      let foods = &mut self.foods;
+      let weapons = &mut self.weapons;
+      let m_sizes = &mut self.data.model_sizes;
+      let map = &self.map;
+      
+      appliance.update(foods, weapons, m_sizes, map, 0.0);
+      appliance.should_draw_range(true);
+      if self.selected_appliance.is_some() {
+        self.appliances[self.selected_appliance.unwrap()].should_draw_range(false);
+      }
+      self.selected_appliance = None;
+    }
+    self.mouse_state = MouseState::Placing;
   }
   
   pub fn update_keypresses(&mut self, delta_time: f32) {
@@ -178,88 +219,21 @@ impl GameScreen {
       self.camera.process_movement(camera::Direction::NegativeY, delta_time);
     }
     if one_pressed {
-      let mouse_ray = self.camera.mouse_to_world_ray(mouse, self.data.window_dim);
-      
-      let mut q = 0;
-      let mut r = 0;
-      if mouse_ray.y < 0.0 {
-        let mut crnt_pos = self.camera.get_position();
-        while crnt_pos.y > 0.0 {
-          crnt_pos += mouse_ray;
-        }
-        crnt_pos -= mouse_ray;
-        
-        let pix_x = crnt_pos.x;
-        let pix_y = crnt_pos.z;
-        let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
-        q = clicked_hex.q();
-        r =  clicked_hex.r();
-        self.valid_place = self.map.is_valid_qr(q,r);
-      } else {
-        self.valid_place = false;
-      }
-      
-     self.placing_appliance = Some(Box::new(Dishwasher::new(Vector2::new(q,r), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &self.map)));
-      if let Some(appliance) = &mut self.placing_appliance {
-        let foods = &mut self.foods;
-        let weapons = &mut self.weapons;
-        let m_sizes = &mut self.data.model_sizes;
-        let map = &self.map;
-        
-        appliance.update(foods, weapons, m_sizes, map, 0.0);
-        appliance.should_draw_range(true);
-        if self.selected_appliace.is_some() {
-          self.appliances[self.selected_appliace.unwrap()].should_draw_range(false);
-        }
-        self.selected_appliace = None;
-      }
-      self.mouse_state = MouseState::Placing;
+      self.start_placing_tower(mouse,
+                               Box::new(Dishwasher::new(Vector2::new(0,0), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), &self.map))
+                              );
     }
     if two_pressed {
-      let mouse_ray = self.camera.mouse_to_world_ray(mouse, self.data.window_dim);
-      
-      let mut q = 0;
-      let mut r = 0;
-      if mouse_ray.y < 0.0 {
-        let mut crnt_pos = self.camera.get_position();
-        while crnt_pos.y > 0.0 {
-          crnt_pos += mouse_ray;
-        }
-        crnt_pos -= mouse_ray;
-        
-        let pix_x = crnt_pos.x;
-        let pix_y = crnt_pos.z;
-        let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
-        q = clicked_hex.q();
-        r =  clicked_hex.r();
-        self.valid_place = self.map.is_valid_qr(q,r);
-      } else {
-        self.valid_place = false;
-      }
-      
-      self.placing_appliance = Some(Box::new(Fridge::new(Vector2::new(q,r), Vector3::new(3.0, 3.0, 3.0), Vector3::new(0.0, 0.0, 0.0), &self.map)));
-      if let Some(appliance) = &mut self.placing_appliance {
-        let foods = &mut self.foods;
-        let weapons = &mut self.weapons;
-        let m_sizes = &mut self.data.model_sizes;
-        let map = &self.map;
-        
-        appliance.update(foods, weapons, m_sizes, map, 0.0);
-        appliance.should_draw_range(true);
-        
-        if self.selected_appliace.is_some() {
-          self.appliances[self.selected_appliace.unwrap()].should_draw_range(false);
-        }
-        self.selected_appliace = None;
-      }
-      self.mouse_state = MouseState::Placing;
+      self.start_placing_tower(mouse, 
+                               Box::new(Fridge::new(Vector2::new(0,0), Vector3::new(3.0, 3.0, 3.0), Vector3::new(0.0, 0.0, 0.0), &self.map))
+                              );
     }
     
-    if let Some(idx) = self.selected_appliace {
+    if let Some(idx) = self.selected_appliance {
       // Sell tower
       if x_pressed {
         self.appliances.remove(idx);
-        self.selected_appliace = None;
+        self.selected_appliance = None;
       }
       // move tower
       if m_pressed {
@@ -267,6 +241,24 @@ impl GameScreen {
         appliance.should_draw_range(true);
         self.placing_appliance = Some(appliance);
         self.mouse_state = MouseState::Placing;
+        
+        let life = self.appliances[idx].current_life_expectancy();
+        
+        let mut hexagons: Vec<Hexagon> = Vec::new();
+        let radius = life-1;
+        let hexagons = Hexagon::generate_hexagon_range(radius, "PurpleHexagon".to_string());
+        
+        let qr = self.appliances[idx].get_qr_location();
+        let appliance_hex = Hexagon::new(qr.x,qr.y, "".to_string());
+        
+        for hexagon in &hexagons {
+          let hex = Hexagon::hex_add(appliance_hex.clone(), hexagon.clone());
+          let q = hex.q();
+          let r = hex.r();
+          if self.map.is_valid_qr(q,r) {
+            self.map.highlight_hex(hex);
+          }
+        }
       }
       // Clean tower
       if c_pressed {
@@ -355,16 +347,15 @@ impl GameScreen {
                 if q == loc.x && r == loc.y {
                   // Select appliance
                   found_appliance = true;
-                  if self.selected_appliace.is_some() {
-                    if i == self.selected_appliace.unwrap() {
+                  if self.selected_appliance.is_some() {
+                    if i == self.selected_appliance.unwrap() {
                       break;
                     }
                     
-                    self.appliances[self.selected_appliace.unwrap()].should_draw_range(false);
+                    self.appliances[self.selected_appliance.unwrap()].should_draw_range(false);
                   }
                   
-                  self.selected_appliace = Some(i);
-               //   self.appliances[i].should_draw_range(true);
+                  self.selected_appliance = Some(i);
                   break;
                 }
               }
@@ -373,10 +364,10 @@ impl GameScreen {
         }
         
         if !found_appliance {
-          if self.selected_appliace.is_some() {
-            self.appliances[self.selected_appliace.unwrap()].should_draw_range(false);
+          if self.selected_appliance.is_some() {
+            self.appliances[self.selected_appliance.unwrap()].should_draw_range(false);
           }
-          self.selected_appliace = None;
+          self.selected_appliance = None;
         }
       }
     }
@@ -394,6 +385,7 @@ impl GameScreen {
     if self.escaped_pressed_last_frame && !escape_pressed {
       self.escaped_pressed_last_frame = false;
       self.mouse_state = MouseState::World;
+      self.map.unhighlight_all_hexs();
       return;
     }
     
@@ -414,6 +406,14 @@ impl GameScreen {
       if let Some(appliance) = &mut self.placing_appliance {
         appliance.set_qr_location(q,r, &self.map);
         self.valid_place = self.map.is_valid_qr(q,r);
+        if self.selected_appliance.is_some() {
+          let some_hex = self.map.get_hex_from_qr(q,r);
+          if let Some(hex) = some_hex {
+            if !hex.is_highlighted() {
+              self.valid_place = false;
+            }
+          }
+        }
       }
       
       if self.placing_appliance.is_some() {
@@ -425,18 +425,35 @@ impl GameScreen {
           let opt_hex = self.map.get_hex_from_qr(q,r);
           if let Some(hex) = opt_hex {
             if hex.is_open() {
+              if let Some(idx) = self.selected_appliance {
+                if self.selected_appliance.is_some() {
+                  let some_hex = self.map.get_hex_from_qr(q,r);
+                  if let Some(hex) = some_hex {
+                    if !hex.is_highlighted() {
+                      self.valid_place = false;
+                      return;
+                    }
+                  }
+                }
+              }
+              
               appliance.should_draw_range(false);
-              self.appliances.push(appliance);
               self.map.set_hexagon_type(q,r,HexagonType::Closed);
               self.valid_place = false;
               self.placing_appliance = None;
               self.mouse_state = MouseState::World;
-              if let Some(idx) = self.selected_appliace {
+              
+              if let Some(idx) = self.selected_appliance {
                 let qr = self.appliances[idx].get_qr_location();
                 self.map.set_hexagon_type(qr.x, qr.y, HexagonType::Open);
                 self.appliances.remove(idx);
-                self.selected_appliace = Some(self.appliances.len()-1);
+                self.selected_appliance = Some(self.appliances.len()-1);
+                let dist = Hexagon::hex_distance(Hexagon::new(q,r, "".to_string()), Hexagon::new(qr.x, qr.y, "".to_string()));
+                appliance.moved_tiles(dist);
+                self.map.unhighlight_all_hexs();
               }
+              
+              self.appliances.push(appliance);
             }
           }
         }
@@ -507,7 +524,7 @@ impl GameScreen {
       let foods = &mut self.foods;
       let weapons = &mut self.weapons;
       let m_sizes = &mut self.data.model_sizes;
-      let map = &self.map;
+      let map = &mut self.map;
       let bin = &mut self.bin;
       
       update_game(map, appliances, foods, weapons, m_sizes, DELTA_STEP);
@@ -599,7 +616,7 @@ impl Scene for GameScreen {
         }
       },
       _ => {
-        if let Some(idx) = self.selected_appliace {
+        if let Some(idx) = self.selected_appliance {
           let map = &self.map;
           self.appliances[idx].draw_range(map, draw_calls);
           
@@ -607,17 +624,17 @@ impl Scene for GameScreen {
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-64.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key X: Sells selected tower".to_string(), 
+                                           "Key X: Sells selected appliance".to_string(), 
                                            "Arial".to_string()));
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-96.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key C: Cleans selected tower".to_string(), 
+                                           "Key C: Cleans selected appliance".to_string(), 
                                            "Arial".to_string()));
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key M: Moves selected tower".to_string(), 
+                                           "Key M: Moves selected appliance".to_string(), 
                                            "Arial".to_string()));
         }
       },

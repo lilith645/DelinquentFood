@@ -80,7 +80,6 @@ pub trait Appliance: ApplianceClone {
   fn apply_effect(&self);
   fn remove_effects(&self);
   
-  fn move_tile(&self, distance: i32);
   fn upgrade(&mut self);
   
   fn upgrade_cost(&self) -> u32;
@@ -114,6 +113,10 @@ pub trait Appliance: ApplianceClone {
     self.mut_data().life_expectancy = self.data().max_life_expectancy;
   }
   
+  fn moved_tiles(&mut self, distance: i32) {
+    self.mut_data().life_expectancy -= distance;
+  }
+  
   fn rotate_towards(&self, position: Vector3<f32>, food: &Box<Food>, angle_offset: f32) -> f32 {
     let loc = food.get_location();
     let direction = Vector2::new(loc.x-position.x, loc.y-position.z).normalize();
@@ -142,17 +145,7 @@ pub trait Appliance: ApplianceClone {
     let mut hexagons: Vec<Hexagon> = Vec::new();
     
     let radius = self.data().range as i32;
-    for q in -radius..radius+1 {
-      let r1 = (-radius).max(-q - radius);
-      let r2 = radius.min(-q + radius);
-      
-      for r in r1..r2+1 {
-        let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
-        let mut texture = "PurpleHexagon".to_string();
-        
-        hexagons.push(Hexagon::new(q, r, texture.to_string()));
-      }
-    }
+    let hexagons = Hexagon::generate_hexagon_range(radius, "PurpleHexagon".to_string());
     
     for hexagon in hexagons {
       let height = 1.2;
@@ -174,10 +167,3 @@ pub trait Appliance: ApplianceClone {
     }
   }
 }
-
-
-
-/*
-impl Tower {
-  
-}*/

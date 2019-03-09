@@ -27,12 +27,13 @@ impl FoodStore {
     wave1.push((Box::new(Strawberry::new(40, food_pos, path.clone(), tile_loc)) as Box<Food>, 40.0));
     
     let mut wave2 = Vec::new();
-    for i in 0..120 {
-      wave2.push((Box::new(Banana::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.5));
-    }
     for i in 0..5 {
-      wave2.push((Box::new(Strawberry::new(121+i, food_pos, path.clone(), tile_loc)) as Box<Food>, (60.0+(i as f32*0.25))));
+      wave2.push((Box::new(Strawberry::new(121+i, food_pos, path.clone(), tile_loc)) as Box<Food>, ((i as f32*0.25))));
     }
+    for i in 0..120 {
+      wave2.push((Box::new(Banana::new(6+i, food_pos, path.clone(), tile_loc)) as Box<Food>, 1.25+i as f32*0.5));
+    }
+   
     
     FoodStore {
       waves: vec!(wave1, wave2),

@@ -76,10 +76,6 @@ impl Appliance for Dishwasher {
     
   }
   
-  fn move_tile(&self, _distance: i32) {
-    
-  }
-  
   fn upgrade(&mut self) {
     
   }

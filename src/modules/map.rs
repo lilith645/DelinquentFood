@@ -35,17 +35,7 @@ impl Map {
         if radius == 0 {
           radius = v[0].parse::<i32>().unwrap();
           y = -radius;
-          for q in -radius..radius+1 {
-            let r1 = (-radius).max(-q - radius);
-            let r2 = radius.min(-q + radius);
-            
-            for r in r1..r2+1 {
-             // let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
-              let texture = "Hexagon".to_string();
-              
-              hexagons.push(Hexagon::new(q, r, texture.to_string()));
-            }
-          }
+          hexagons = Hexagon::generate_hexagon_range(radius, "Hexagon".to_string());
           continue;
         }
         
@@ -193,6 +183,14 @@ impl Map {
     for hexagon in &mut self.map {
       if Hexagon::hex_equals(light_hex.clone(), hexagon.clone()) {
         hexagon.highlight();
+      }
+    }
+  }
+  
+  pub fn unhighlight_all_hexs(&mut self) {
+    for hexagon in &mut self.map {
+      if hexagon.is_highlighted() {
+        hexagon.plain();
       }
     }
   }

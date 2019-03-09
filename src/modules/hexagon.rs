@@ -229,6 +229,10 @@ impl Hexagon {
     self.hex_type == HexagonType::End
   }
   
+  pub fn is_highlighted(&self) -> bool {
+    self.model == "BlueHexagon".to_string()
+  }
+  
   pub fn plain(&mut self) {
     self.model = "Hexagon".to_string();
   }
@@ -340,6 +344,22 @@ impl Hexagon {
     neigbors.push(Hexagon::hex_neigbor(hexagon, HexDirection::NorthWest));
     
     neigbors
+  }
+  
+  pub fn generate_hexagon_range(radius: i32, texture: String) -> Vec<Hexagon> {
+    let mut hexagons: Vec<Hexagon> = Vec::new();
+    
+    for q in -radius..radius+1 {
+      let r1 = (-radius).max(-q - radius);
+      let r2 = radius.min(-q + radius);
+      
+      for r in r1..r2+1 {
+        let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
+        hexagons.push(Hexagon::new(q, r, texture.to_string()));
+      }
+    }
+    
+    hexagons
   }
   
   pub fn hex_add(hexagon: Hexagon, other_hexagon: Hexagon) -> Hexagon {

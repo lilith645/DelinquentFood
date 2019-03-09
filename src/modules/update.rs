@@ -1,12 +1,12 @@
 use crate::modules::food::Food;
 use crate::modules::appliances::traits::Appliance;
 use crate::modules::weapons::Weapon;
-
+use crate::modules::hexagon::HexagonType;
 use crate::modules::map::Map;
 
 use cgmath::Vector3;
 
-pub fn update_game(map: &Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, delta_time: f32) {
+pub fn update_game(map: &mut Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, delta_time: f32) {
   
   for food in &mut foods.iter_mut() {
     food.update(map, delta_time);
@@ -20,6 +20,8 @@ pub fn update_game(map: &Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut 
     
     appliances[i-offset].update(foods, weapons, model_sizes, map, delta_time);
     if appliances[i-offset].current_life_expectancy() <= 0 {
+      let qr = appliances[i-offset].get_qr_location();
+      map.set_hexagon_type(qr.x, qr.y, HexagonType::Open);
       appliances.remove(i-offset);
       offset += 1;
     }

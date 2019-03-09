@@ -78,10 +78,6 @@ impl Appliance for Fridge {
     
   }
   
-  fn move_tile(&self, _distance: i32) {
-    
-  }
-  
   fn upgrade(&mut self) {
     
   }
