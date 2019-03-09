@@ -68,7 +68,7 @@ pub trait Appliance: ApplianceClone {
   fn data(&self) -> &ApplianceData;
   fn mut_data(&mut self) -> &mut ApplianceData;
   
-  fn update(&mut self, foods: &mut Vec<Food>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, map: &Map, delta_time: f32);
+  fn update(&mut self, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, map: &Map, delta_time: f32);
   
   fn fire(&mut self);
   
@@ -90,7 +90,7 @@ pub trait Appliance: ApplianceClone {
     self.data().range
   }
   
-  fn rotate_towards(&self, position: Vector3<f32>, food: &Food, angle_offset: f32) -> f32 {
+  fn rotate_towards(&self, position: Vector3<f32>, food: &Box<Food>, angle_offset: f32) -> f32 {
     let loc = food.get_location();
     let direction = Vector2::new(loc.x-position.x, loc.y-position.z).normalize();
     let mut angle = Deg::atan2(direction.x, direction.y);

@@ -33,7 +33,7 @@ impl Weapon for Dish {
     &mut self.data
   }
   
-  fn hit_target(&mut self, food: &mut Food) {
+  fn hit_target(&mut self, food: &mut Box<Food>) {
     food.apply_damage(self.data.damage);
     self.data.pierce -= 1;
     self.data.food_hit.push(food.get_id());

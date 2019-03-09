@@ -42,7 +42,7 @@ pub struct GameScreen {
   total_delta: f32,
   map: Map,
   appliances: Vec<Box<Appliance>>,
-  foods: Vec<Food>,
+  foods: Vec<Box<Food>>,
   weapons: Vec<Box<Weapon>>,
   ray_position: Vector2<f32>,
   game_speed: i32,
@@ -127,7 +127,7 @@ impl GameScreen {
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Food>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, the_food_store: FoodStore, game_speed: i32, bin: i32) -> GameScreen {
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Box<Food>>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, the_food_store: FoodStore, game_speed: i32, bin: i32) -> GameScreen {
     
     GameScreen {
       data: SceneData::new(window_size, model_sizes),
@@ -578,7 +578,7 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, self.data.window_dim.y-128.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Wave: ".to_owned() + &(self.the_food_store.wave_number()).to_string(), 
+                                           "Wave: ".to_owned() + &(self.the_food_store.wave_number() + 1).to_string(), 
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5), 
                                            Vector2::new(128.0, 128.0), 

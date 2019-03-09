@@ -1,10 +1,10 @@
-use crate::modules::food::Food;
+use crate::modules::food::{Food, Strawberry};
 use crate::modules::map::Map;
 
 
 use cgmath::{Vector3};
 
-type Wave = Vec<(Food, f32)>;
+type Wave = Vec<(Box<Food>, f32)>;
 
 #[derive(Clone)]
 pub struct FoodStore {
@@ -22,11 +22,11 @@ impl FoodStore {
     
     let mut wave1 = Vec::new();
     for i in 0..40 {
-      wave1.push((Food::new(i, Vector3::new(food_pos.x, 0.0, food_pos.y), 20, "Strawberry".to_string(), path.clone(), tile_loc), i as f32*1.0));
+      wave1.push((Box::new(Strawberry::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*1.0));
     }
     let mut wave2 = Vec::new();
     for i in 0..120 {
-      wave2.push((Food::new(i, Vector3::new(food_pos.x, 0.0, food_pos.y), 20, "Strawberry".to_string(), path.clone(), tile_loc), i as f32*0.5));
+      wave2.push((Box::new(Strawberry::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.5));
     }
     
     FoodStore {
@@ -51,7 +51,7 @@ impl FoodStore {
     }
   }
   
-  pub fn update(&mut self, delta_time: f32) -> Option<Food> {
+  pub fn update(&mut self, delta_time: f32) -> Option<Box<Food>> {
     if self.current_wave < self.waves.len() {
       let wave = &mut self.waves[self.current_wave];
       

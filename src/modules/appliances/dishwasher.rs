@@ -35,7 +35,7 @@ impl Appliance for Dishwasher {
     &mut self.data
   }
   
-  fn update(&mut self, foods: &mut Vec<Food>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, _map: &Map, delta_time: f32) {
+  fn update(&mut self, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, _map: &Map, delta_time: f32) {
     self.data.offset.y = 0.0;
     for (reference, size) in model_sizes {
       if *reference == "Hexagon".to_string() {

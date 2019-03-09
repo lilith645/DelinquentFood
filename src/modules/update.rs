@@ -6,7 +6,7 @@ use crate::modules::map::Map;
 
 use cgmath::Vector3;
 
-pub fn update_game(map: &Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut Vec<Food>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, delta_time: f32) {
+pub fn update_game(map: &Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, delta_time: f32) {
   
   for food in &mut foods.iter_mut() {
     food.update(map, delta_time);

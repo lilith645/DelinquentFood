@@ -33,7 +33,7 @@ impl Weapon for ColdSnap {
     &mut self.data
   }
   
-  fn hit_target(&mut self, food: &mut Food) {
+  fn hit_target(&mut self, food: &mut Box<Food>) {
     food.apply_damage(self.data.damage);
     food.apply_debuffs(self.data.debuffs.clone());
     self.data.food_hit.push(food.get_id());

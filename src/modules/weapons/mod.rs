@@ -139,7 +139,7 @@ pub trait Weapon: WeaponClone {
     !self.data().food_hit.contains(&id)
   }
   
-  fn hit_target(&mut self, food: &mut Food);
+  fn hit_target(&mut self, food: &mut Box<Food>);
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
     let position = self.data().position;
