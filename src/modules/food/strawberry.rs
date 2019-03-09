@@ -15,8 +15,9 @@ impl Strawberry {
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
     let size = Vector3::new(1.5, 1.5, 1.5);
+    let sell_price = 40;
     Strawberry {
-      data: FoodData::new(id, position, rotation, size, speed, health, "Strawberry".to_string(), path.clone(), location),
+      data: FoodData::new(id, position, rotation, size, speed, health, "Strawberry".to_string(), path.clone(), location, sell_price),
     }
   }
 }

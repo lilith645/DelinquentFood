@@ -18,11 +18,11 @@ impl Fridge {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
     let life_expectancy = 4;
     let range = 1;
-    let charge = 0.0;
+    let cost = 50;
     let fire_rate = 2.0;
     
     Fridge {
-      data: ApplianceData::new(tile, size, rotation, "Fridge".to_string(), life_expectancy, range, fire_rate, charge, map),
+      data: ApplianceData::new(tile, size, rotation, "Fridge".to_string(), life_expectancy, range, fire_rate, cost, map),
     }
   }
 }
@@ -90,11 +90,11 @@ impl Appliance for Fridge {
     
   }
   
-  fn upgrade_cost(&self) -> u32 {
+  fn upgrade_cost(&self) -> i32 {
     1
   }
   
-  fn sell(&self) -> u32 {
+  fn sell(&self) -> i32 {
     1
   }
 }

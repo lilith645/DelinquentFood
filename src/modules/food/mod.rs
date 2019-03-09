@@ -27,10 +27,11 @@ pub struct FoodData {
   health: i32,
   total_dt: f32,
   cooked: bool,
+  sell_price: i32,
 }
 
 impl FoodData {
-  pub fn new(id: i32, position: Vector3<f32>, rotation: Vector3<f32>, size: Vector3<f32>, speed: f32, health: i32, model: String, path: Vec<u32>, location: Vector2<i32>) -> FoodData {
+  pub fn new(id: i32, position: Vector3<f32>, rotation: Vector3<f32>, size: Vector3<f32>, speed: f32, health: i32, model: String, path: Vec<u32>, location: Vector2<i32>, sell_price: i32) -> FoodData {
     FoodData {
       id,
       position,
@@ -46,6 +47,7 @@ impl FoodData {
       health,
       total_dt: 0.0,
       cooked: false,
+      sell_price,
     }
   }
 }
@@ -151,6 +153,10 @@ pub trait Food: FoodClone {
         self.mut_data().debuffs.push(debuff);
       }
     }
+  }
+  
+  fn sell_price(&self) -> i32 {
+    self.data().sell_price
   }
   
   fn get_tile_location(&self) -> Vector2<i32> {

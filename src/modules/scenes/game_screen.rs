@@ -52,6 +52,7 @@ pub struct GameScreen {
   selected_appliance: Option<usize>,
   valid_place: bool,
   the_food_store: FoodStore,
+  money: i32,
 }
 
 impl GameScreen {
@@ -93,10 +94,11 @@ impl GameScreen {
       selected_appliance: None,
       valid_place: false,
       the_food_store: store,
+      money: 300,
     }
   }
   
-  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Box<Food>>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, the_food_store: FoodStore, game_speed: i32, bin: i32) -> GameScreen {
+  pub fn new_with_data(window_size: Vector2<f32>, rng: rand::prelude::ThreadRng, camera: camera::Camera, screen_offset: Vector2<f32>, appliances: Vec<Box<Appliance>>, foods: Vec<Box<Food>>, map: Map, model_sizes: Vec<(String, Vector3<f32>)>, weapons: Vec<Box<Weapon>>, the_food_store: FoodStore, money: i32, game_speed: i32, bin: i32) -> GameScreen {
     
     GameScreen {
       data: SceneData::new(window_size, model_sizes),
@@ -120,6 +122,7 @@ impl GameScreen {
       selected_appliance: None,
       valid_place: false,
       the_food_store,
+      money,
     }
   }
   
@@ -262,7 +265,10 @@ impl GameScreen {
       }
       // Clean tower
       if c_pressed {
-        self.appliances[idx].clean();
+        if self.money > self.appliances[idx].clean_cost() {
+          self.money -= self.appliances[idx].clean_cost();
+          self.appliances[idx].clean();
+        }
       }
     }
   }
@@ -451,8 +457,13 @@ impl GameScreen {
                 let dist = Hexagon::hex_distance(Hexagon::new(q,r, "".to_string()), Hexagon::new(qr.x, qr.y, "".to_string()));
                 appliance.moved_tiles(dist);
                 self.map.unhighlight_all_hexs();
+              } else {
+                if appliance.buy_cost() > self.money {
+                  return;
+                }
               }
               
+              self.money -= appliance.buy_cost();
               self.appliances.push(appliance);
             }
           }
@@ -526,9 +537,10 @@ impl GameScreen {
       let m_sizes = &mut self.data.model_sizes;
       let map = &mut self.map;
       let bin = &mut self.bin;
+      let money = &mut self.money;
       
       update_game(map, appliances, foods, weapons, m_sizes, DELTA_STEP);
-      collisions(map, foods, weapons, m_sizes, bin, DELTA_STEP);
+      collisions(map, foods, weapons, m_sizes, bin, money, DELTA_STEP);
       
       if self.foods.len() == 0 {
         if self.the_food_store.next_wave() {
@@ -554,7 +566,7 @@ impl Scene for GameScreen {
   
   fn future_scene(&mut self, window_size: Vector2<f32>) -> Box<Scene> {
     if self.data().window_resized {
-      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.appliances.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone(), self.weapons.clone(), self.the_food_store.clone(), self.game_speed, self.bin))
+      Box::new(GameScreen::new_with_data(window_size, self.rng.clone(), self.camera.clone(), self.screen_offset, self.appliances.clone(), self.foods.clone(), self.map.clone(), self.data.model_sizes.clone(), self.weapons.clone(), self.the_food_store.clone(), self.money, self.game_speed, self.bin))
     } else {
       Box::new(MenuScreen::new(window_size, self.data.model_sizes.clone()))
     }
@@ -645,6 +657,11 @@ impl Scene for GameScreen {
     /* 
     ** UI
     */
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(self.data.window_dim.x-128.0, self.data.window_dim.y-64.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Money $".to_owned() + &(self.money).to_string(), 
+                                           "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, self.data.window_dim.y-96.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
@@ -658,12 +675,12 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 1: Spawn Dishwasher".to_string(), 
+                                           "Key 1: Buy Dishwasher $100".to_string(), 
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-32.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 2: Spawn Fridge".to_string(), 
+                                           "Key 2: Buy Fridge $50".to_string(), 
                                            "Arial".to_string()));
     
     // Game Speed

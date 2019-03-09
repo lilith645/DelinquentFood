@@ -29,10 +29,11 @@ pub struct ApplianceData {
   pub life_expectancy: i32,
   pub max_life_expectancy: i32,
   pub draw_range: bool,
+  pub buy_cost: i32,
 }
 
 impl ApplianceData {
-  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, model: String, life: i32, rng: u32, fire_rate: f32, charge: f32, map: &Map) -> ApplianceData {
+  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, model: String, life: i32, rng: u32, fire_rate: f32, cost: i32, map: &Map) -> ApplianceData {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
     
     ApplianceData {
@@ -43,12 +44,13 @@ impl ApplianceData {
       model,
       tile_location: tile,
       range: rng,
-      charge,
+      charge: 0.0,
       fire_rate,
       target: TargetPriority::First,
       life_expectancy: life,
       max_life_expectancy: life,
       draw_range: false,
+      buy_cost: cost,
     }
   }
 }
@@ -82,8 +84,16 @@ pub trait Appliance: ApplianceClone {
   
   fn upgrade(&mut self);
   
-  fn upgrade_cost(&self) -> u32;
-  fn sell(&self) -> u32;
+  fn buy_cost(&self) -> i32 {
+    self.data().buy_cost
+  }
+  
+  fn clean_cost(&self) -> i32 {
+    (self.data().max_life_expectancy - self.data().life_expectancy) * 20
+  }
+  
+  fn upgrade_cost(&self) -> i32;
+  fn sell(&self) -> i32;
   
   fn get_position(&self) -> Vector3<f32> {
     self.data().position

@@ -18,11 +18,11 @@ impl Dishwasher {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
     let life_expectancy = 2;
     let range = 3;
-    let charge = 0.0;
+    let cost = 100;
     let fire_rate = 1.0;
     
     Dishwasher {
-      data: ApplianceData::new(tile, size, rotation, "Dishwasher".to_string(), life_expectancy, range, fire_rate, charge, map),
+      data: ApplianceData::new(tile, size, rotation, "Dishwasher".to_string(), life_expectancy, range, fire_rate, cost, map),
     }
   }
 }
@@ -88,11 +88,11 @@ impl Appliance for Dishwasher {
     
   }
   
-  fn upgrade_cost(&self) -> u32 {
+  fn upgrade_cost(&self) -> i32 {
     1
   }
   
-  fn sell(&self) -> u32 {
+  fn sell(&self) -> i32 {
     1
   }
 }
