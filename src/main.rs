@@ -65,9 +65,9 @@ fn main() {
   graphics.preload_texture(String::from("Logo"), 
                            String::from("./resources/Textures/Logo.png"));
   
-  graphics.add_texture(String::from("LifeIndicatorFull"), 
+  graphics.preload_texture(String::from("LifeIndicatorFull"), 
                            String::from("./resources/Textures/UI/LifeExpectancyFull.png"));
-  graphics.add_texture(String::from("LifeIndicatorEmpty"), 
+  graphics.preload_texture(String::from("LifeIndicatorEmpty"), 
                            String::from("./resources/Textures/UI/LifeExpectancyEmpty.png"));
   
   graphics.add_model("Lance".to_string(), "./windys-modeling-agency/Unfinished/Lance.glb".to_string());

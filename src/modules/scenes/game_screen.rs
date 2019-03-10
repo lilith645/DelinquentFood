@@ -448,11 +448,6 @@ impl GameScreen {
                 }
               }
               
-              appliance.should_draw_range(false);
-              self.valid_place = false;
-              self.placing_appliance = None;
-              self.mouse_state = MouseState::World;
-              
               // if moving tower
               if let Some(idx) = self.selected_appliance {
                 let qr = self.appliances[idx].get_qr_location();
@@ -469,6 +464,10 @@ impl GameScreen {
                 self.money -= appliance.buy_cost();
               }
               
+              appliance.should_draw_range(false);
+              self.valid_place = false;
+              self.placing_appliance = None;
+              self.mouse_state = MouseState::World;
               self.map.set_hexagon_type(q,r,HexagonType::Closed);
               self.appliances.push(appliance);
             }
@@ -663,8 +662,8 @@ impl Scene for GameScreen {
     /* 
     ** UI
     */
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(self.data.window_dim.x-128.0, self.data.window_dim.y-64.0), 
-                                           Vector2::new(128.0, 128.0), 
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(self.data.window_dim.x-160.0, self.data.window_dim.y-64.0), 
+                                           Vector2::new(196.0, 196.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Money $".to_owned() + &(self.money).to_string(), 
                                            "Arial".to_string()));
@@ -691,7 +690,7 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-64.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 3: Buy MeatTenderizer $70".to_string(), 
+                                           "Key 3: Buy MeatTenderizer $80".to_string(), 
                                            "Arial".to_string()));
     
     // Game Speed

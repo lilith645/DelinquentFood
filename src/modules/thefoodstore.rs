@@ -20,12 +20,14 @@ impl FoodStore {
     let food_pos = map.tile_position_from_index(path[0] as usize);
     let tile_loc = map.get_qr_from_index(path[0] as usize);
     
+    // 205 dollars
     let mut wave1 = Vec::new();
     for i in 0..39 {
       wave1.push((Box::new(Banana::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32));
     }
     wave1.push((Box::new(Strawberry::new(40, food_pos, path.clone(), tile_loc)) as Box<Food>, 40.0));
     
+    // 300 dollars
     let mut wave2 = Vec::new();
     for i in 0..5 {
       wave2.push((Box::new(Strawberry::new(121+i, food_pos, path.clone(), tile_loc)) as Box<Food>, ((i as f32*0.25))));
@@ -34,6 +36,7 @@ impl FoodStore {
       wave2.push((Box::new(Banana::new(6+i, food_pos, path.clone(), tile_loc)) as Box<Food>, 1.25+i as f32*0.75));
     }
     
+    // 600 dollars
     let mut wave3 = Vec::new();
     for i in 0..80 {
       if i%2 == 0 {
@@ -43,8 +46,14 @@ impl FoodStore {
       }
     }
     
+    // 800 dollars
+    let mut wave4 = Vec::new();
+    for i in 0..80 {
+      wave4.push((Box::new(Strawberry::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.5));
+    }
+    
     FoodStore {
-      waves: vec!(wave1, wave2, wave3),
+      waves: vec!(wave1, wave2, wave3, wave4),
       current_idx: 0,
       current_wave: 0,
       wave_delta: 0.0,

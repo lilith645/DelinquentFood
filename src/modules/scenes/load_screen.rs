@@ -62,8 +62,8 @@ impl Scene for LoadScreen {
     let (width, height) = (dim.x as f32, dim.y as f32);
     
     if self.first_loop {
-      draw_calls.push(DrawCall::load_texture("LifeIndicatorFull".to_string()));
-      draw_calls.push(DrawCall::load_texture("LifeIndicatorEmpty".to_string()));
+     // draw_calls.push(DrawCall::load_texture("LifeIndicatorFull".to_string()));
+      //draw_calls.push(DrawCall::load_texture("LifeIndicatorEmpty".to_string()));
       
       draw_calls.push(DrawCall::load_model("Tower".to_string()));
       draw_calls.push(DrawCall::load_model("Lance".to_string()));
@@ -116,6 +116,13 @@ impl Scene for LoadScreen {
                                 90.0)
     );
     
+    
+    draw_calls.push(
+      DrawCall::draw_textured(Vector2::new(width*0.35, height*0.6), 
+                              Vector2::new(500.0, 500.0),
+                              90.0,
+                              String::from("LifeIndicatorFull"))
+    );
    // draw_calls.push(DrawCall::draw_model(Vector3::new(0.0, 0.0, 0.0), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
   }
 }
