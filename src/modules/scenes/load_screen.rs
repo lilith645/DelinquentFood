@@ -5,8 +5,7 @@ use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 use crate::modules::scenes::GameScreen;
 
-use cgmath::Vector2;
-use cgmath::Vector4;
+use cgmath::{Vector2, Vector3, Vector4};
 
 const LOGO_TIMER: f32 = 1.5;
 
@@ -63,6 +62,9 @@ impl Scene for LoadScreen {
     let (width, height) = (dim.x as f32, dim.y as f32);
     
     if self.first_loop {
+      draw_calls.push(DrawCall::load_texture("LifeIndicatorFull".to_string()));
+      draw_calls.push(DrawCall::load_texture("LifeIndicatorEmpty".to_string()));
+      
       draw_calls.push(DrawCall::load_model("Tower".to_string()));
       draw_calls.push(DrawCall::load_model("Lance".to_string()));
       draw_calls.push(DrawCall::load_model("Chair".to_string()));
@@ -80,6 +82,7 @@ impl Scene for LoadScreen {
       draw_calls.push(DrawCall::load_model("Spoon".to_string()));
       draw_calls.push(DrawCall::load_model("Plate".to_string()));
       draw_calls.push(DrawCall::load_model("Bombard".to_string()));
+      draw_calls.push(DrawCall::load_model("MeatTenderizer".to_string()));
     }
     
     draw_calls.push(DrawCall::set_texture_scale(1.0));
@@ -112,5 +115,7 @@ impl Scene for LoadScreen {
                                 Vector4::new(0.1, 0.1, 0.1, self.alpha),
                                 90.0)
     );
+    
+   // draw_calls.push(DrawCall::draw_model(Vector3::new(0.0, 0.0, 0.0), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
   }
 }

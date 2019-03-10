@@ -1,8 +1,10 @@
 pub use self::dish::Dish;
 pub use self::coldsnap::ColdSnap;
+pub use self::tenderizer::Tenderizer;
 
 mod dish;
 mod coldsnap;
+mod tenderizer;
 
 use maat_graphics::DrawCall;
 

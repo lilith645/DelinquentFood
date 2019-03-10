@@ -65,6 +65,11 @@ fn main() {
   graphics.preload_texture(String::from("Logo"), 
                            String::from("./resources/Textures/Logo.png"));
   
+  graphics.add_texture(String::from("LifeIndicatorFull"), 
+                           String::from("./resources/Textures/UI/LifeExpectancyFull.png"));
+  graphics.add_texture(String::from("LifeIndicatorEmpty"), 
+                           String::from("./resources/Textures/UI/LifeExpectancyEmpty.png"));
+  
   graphics.add_model("Lance".to_string(), "./windys-modeling-agency/Unfinished/Lance.glb".to_string());
   graphics.add_model("Chair".to_string(), "./windys-modeling-agency/Unfinished/chair-1stattempt.glb".to_string());
   graphics.add_model("Tower".to_string(), "./windys-modeling-agency/Unfinished/TowerStart.glb".to_string());
@@ -81,6 +86,7 @@ fn main() {
   // Towers
   graphics.add_model("Fridge".to_string(), "./windys-modeling-agency/Unfinished/Fridge.glb".to_string());
   graphics.add_model("Dishwasher".to_string(), "./windys-modeling-agency/Unfinished/TowerStart.glb".to_string());
+  graphics.add_model("MeatTenderizer".to_string(), "./windys-modeling-agency/Unfinished/MeatTenderizer.glb".to_string());
   
   // Weapons
   graphics.add_model("Spoon".to_string(), "./windys-modeling-agency/Unfinished/Spoon.glb".to_string());

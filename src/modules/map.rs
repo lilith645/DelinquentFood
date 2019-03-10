@@ -97,7 +97,7 @@ impl Map {
     for hexagon in &self.map {
       let height = {
         if hexagon.is_path() {
-          0.1
+          0.2
         } else {
           1.0
         }

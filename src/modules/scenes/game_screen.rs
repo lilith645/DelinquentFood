@@ -6,7 +6,7 @@ use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
 use crate::modules::food::Food;
-use crate::modules::appliances::{Dishwasher, Fridge};
+use crate::modules::appliances::{Dishwasher, Fridge, MeatTenderizer};
 use crate::modules::appliances::traits::Appliance;
 use crate::modules::weapons::{Weapon};
 use crate::modules::hexagon::{Layout, Hexagon, HexagonType};
@@ -171,8 +171,9 @@ impl GameScreen {
     let mouse = self.data.mouse_pos;
     
     let escape_pressed = self.data().keys.escape_pressed();
-    let mut one_pressed = self.data.keys.one_pressed();
-    let mut two_pressed = self.data.keys.two_pressed();
+    let one_pressed = self.data.keys.one_pressed();
+    let two_pressed = self.data.keys.two_pressed();
+    let three_pressed = self.data.keys.three_pressed();
     let mut w_pressed = self.data.keys.w_pressed();
     let mut a_pressed = self.data.keys.a_pressed();
     let mut s_pressed = self.data.keys.s_pressed();
@@ -231,10 +232,16 @@ impl GameScreen {
                                Box::new(Fridge::new(Vector2::new(0,0), Vector3::new(3.0, 3.0, 3.0), Vector3::new(0.0, 0.0, 0.0), &self.map))
                               );
     }
+    if three_pressed {
+      self.start_placing_tower(mouse, 
+                               Box::new(MeatTenderizer::new(Vector2::new(0,0), Vector3::new(3.0, 3.0, 3.0), Vector3::new(0.0, 0.0, 0.0), &self.map))
+                              );
+    }
     
     if let Some(idx) = self.selected_appliance {
       // Sell tower
       if x_pressed {
+        self.money += self.appliances[idx].sell_price();
         self.appliances.remove(idx);
         self.selected_appliance = None;
       }
@@ -431,24 +438,22 @@ impl GameScreen {
           let opt_hex = self.map.get_hex_from_qr(q,r);
           if let Some(hex) = opt_hex {
             if hex.is_open() {
-              if let Some(idx) = self.selected_appliance {
-                if self.selected_appliance.is_some() {
-                  let some_hex = self.map.get_hex_from_qr(q,r);
-                  if let Some(hex) = some_hex {
-                    if !hex.is_highlighted() {
-                      self.valid_place = false;
-                      return;
-                    }
+              if self.selected_appliance.is_some() {
+                let some_hex = self.map.get_hex_from_qr(q,r);
+                if let Some(hex) = some_hex {
+                  if !hex.is_highlighted() {
+                    self.valid_place = false;
+                    return;
                   }
                 }
               }
               
               appliance.should_draw_range(false);
-              self.map.set_hexagon_type(q,r,HexagonType::Closed);
               self.valid_place = false;
               self.placing_appliance = None;
               self.mouse_state = MouseState::World;
               
+              // if moving tower
               if let Some(idx) = self.selected_appliance {
                 let qr = self.appliances[idx].get_qr_location();
                 self.map.set_hexagon_type(qr.x, qr.y, HexagonType::Open);
@@ -457,13 +462,14 @@ impl GameScreen {
                 let dist = Hexagon::hex_distance(Hexagon::new(q,r, "".to_string()), Hexagon::new(qr.x, qr.y, "".to_string()));
                 appliance.moved_tiles(dist);
                 self.map.unhighlight_all_hexs();
-              } else {
+              } else { 
                 if appliance.buy_cost() > self.money {
                   return;
                 }
+                self.money -= appliance.buy_cost();
               }
               
-              self.money -= appliance.buy_cost();
+              self.map.set_hexagon_type(q,r,HexagonType::Closed);
               self.appliances.push(appliance);
             }
           }
@@ -598,9 +604,9 @@ impl Scene for GameScreen {
   }
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
-    draw_calls.push(DrawCall::set_texture_scale(DEFAULT_ZOOM));
-    draw_calls.push(DrawCall::lerp_ortho_camera_to_pos(self.screen_offset, Vector2::new(0.05, 0.05)));
-    draw_calls.push(DrawCall::lerp_ortho_camera_to_size(self.data.window_dim*self.zoom, Vector2::new(0.05, 0.05)));
+   // draw_calls.push(DrawCall::set_texture_scale(DEFAULT_ZOOM));
+   // draw_calls.push(DrawCall::lerp_ortho_camera_to_pos(self.screen_offset, Vector2::new(0.05, 0.05)));
+    //draw_calls.push(DrawCall::lerp_ortho_camera_to_size(self.data.window_dim*self.zoom, Vector2::new(0.05, 0.05)));
     draw_calls.push(DrawCall::set_camera(self.camera.clone()));
     
     for food in &self.foods {
@@ -609,7 +615,7 @@ impl Scene for GameScreen {
     
     for appliance in &self.appliances {
       let map = &self.map;
-      appliance.draw(map, draw_calls);
+      appliance.draw(map, &self.camera, self.data.window_dim.y as f32/self.data.window_dim.x as f32, draw_calls);
     }
     
     for weapon in &self.weapons {
@@ -633,17 +639,17 @@ impl Scene for GameScreen {
           self.appliances[idx].draw_range(map, draw_calls);
           
           // UI 
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-64.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-96.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key X: Sells selected appliance".to_string(), 
                                            "Arial".to_string()));
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-96.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key C: Cleans selected appliance".to_string(), 
                                            "Arial".to_string()));
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-160.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key M: Moves selected appliance".to_string(), 
@@ -682,6 +688,11 @@ impl Scene for GameScreen {
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key 2: Buy Fridge $50".to_string(), 
                                            "Arial".to_string()));
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-64.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key 3: Buy MeatTenderizer $70".to_string(), 
+                                           "Arial".to_string()));
     
     // Game Speed
     draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(64.0, 16.0), 
@@ -689,6 +700,7 @@ impl Scene for GameScreen {
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Speed: x".to_owned() + &(self.game_speed).to_string(), 
                                            "Arial".to_string()));
+                                           
     
   }
 }

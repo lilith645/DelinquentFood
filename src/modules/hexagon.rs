@@ -297,7 +297,7 @@ impl Hexagon {
     let radius = map.get_radius();
     
     draw_calls.push(DrawCall::draw_model(Vector3::new(position.x, height, position.y),
-                                           Vector3::new(radius as f32/4.0, height, radius as f32/4.0),
+                                           Vector3::new(radius as f32/3.95, height, radius as f32/3.95),
                                            Vector3::new(0.0, 90.0, 0.0), 
                                            self.model.to_string()));
   }

@@ -1,4 +1,6 @@
 use maat_graphics::DrawCall;
+use maat_graphics::camera;
+
 use crate::modules::food::Food;
 use crate::modules::weapons::Weapon;
 use crate::modules::map::Map;
@@ -88,6 +90,10 @@ pub trait Appliance: ApplianceClone {
     self.data().buy_cost
   }
   
+  fn sell_price(&self) -> i32 {
+    (self.data().buy_cost as f32*0.6).ceil() as i32
+  }
+  
   fn clean_cost(&self) -> i32 {
     (self.data().max_life_expectancy - self.data().life_expectancy) * 20
   }
@@ -170,10 +176,13 @@ pub trait Appliance: ApplianceClone {
     }
   }
   
-  fn draw(&self, map: &Map, draw_calls: &mut Vec<DrawCall>) {
+  fn draw(&self, map: &Map, camera: &camera::Camera, aspect: f32, draw_calls: &mut Vec<DrawCall>) { 
     draw_calls.push(DrawCall::draw_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
     if self.data().draw_range {
       self.draw_range(map, draw_calls);
     }
+    
+    // let screen_coords = camera.world_to_screen_coords(self.data().position+self.data().offset, aspect);
+    //println!("coords: {} {}", screen_coords.x, screen_coords.y);
   }
 }

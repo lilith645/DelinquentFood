@@ -19,7 +19,7 @@ impl Fridge {
     let life_expectancy = 4;
     let range = 1;
     let cost = 50;
-    let fire_rate = 2.0;
+    let fire_rate = 1.0;
     
     Fridge {
       data: ApplianceData::new(tile, size, rotation, "Fridge".to_string(), life_expectancy, range, fire_rate, cost, map),

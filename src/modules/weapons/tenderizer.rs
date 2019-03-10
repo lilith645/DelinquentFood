@@ -5,26 +5,26 @@ use crate::modules::food::Food;
 use cgmath::Vector3;
 
 #[derive(Clone)]
-pub struct ColdSnap {
+pub struct Tenderizer {
   data: WeaponData,
 }
 
-impl ColdSnap {
-  pub fn new() -> ColdSnap {
+impl Tenderizer {
+  pub fn new() -> Tenderizer {
     let velocity = 0.0;
     let rotation_velocity = Vector3::new(0.0, 0.0, 0.0);
-    let damage = 1;
-    let pierce = 1;
+    let damage = 5;
+    let pierce = 10;
     let timer = 0.6;
     let scale = Vector3::new(1.9, 0.3, 1.9);
-    let debuff = vec!(Debuff::Slow(1.0));
-    ColdSnap {
-      data: WeaponData::new(velocity, rotation_velocity, damage, pierce, timer, scale, WeaponType::Tile, debuff, "BlueHexagon".to_string()),
+    let debuff = vec!();
+    Tenderizer {
+      data: WeaponData::new(velocity, rotation_velocity, damage, pierce, timer, scale, WeaponType::Tile, debuff, "RedHexagon".to_string()),
     }
   }
 }
 
-impl Weapon for ColdSnap {
+impl Weapon for Tenderizer {
   fn data(&self) -> &WeaponData {
     &self.data
   }

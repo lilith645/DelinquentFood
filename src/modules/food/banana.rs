@@ -15,7 +15,7 @@ impl Banana {
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
     let size = Vector3::new(1.0, 1.0, 1.0);
-    let sell_price = 10;
+    let sell_price = 5;
     Banana {
       data: FoodData::new(id, position, rotation, size, speed, health, "Bombard".to_string(), path.clone(), location, sell_price),
     }
