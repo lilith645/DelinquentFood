@@ -6,7 +6,7 @@ use crate::modules::weapons::Weapon;
 use crate::modules::map::Map;
 use crate::modules::hexagon::{Layout, Hexagon};
 
-use cgmath::{InnerSpace, Angle, Deg, Vector2, Vector3};
+use cgmath::{InnerSpace, Angle, Deg, Vector2, Vector3, Vector4};
 
 #[derive(Clone)]
 pub enum TargetPriority {
@@ -176,13 +176,22 @@ pub trait Appliance: ApplianceClone {
     }
   }
   
-  fn draw(&self, map: &Map, camera: &camera::Camera, aspect: f32, draw_calls: &mut Vec<DrawCall>) { 
+  fn draw(&self, map: &Map, camera: &camera::Camera, window_dim: Vector2<f32>, draw_calls: &mut Vec<DrawCall>) { 
     draw_calls.push(DrawCall::draw_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
     if self.data().draw_range {
       self.draw_range(map, draw_calls);
     }
     
-    // let screen_coords = camera.world_to_screen_coords(self.data().position+self.data().offset, aspect);
-    //println!("coords: {} {}", screen_coords.x, screen_coords.y);
+    let cam_pos = camera.get_position();
+    let distance = (self.data().position-cam_pos).magnitude();
+    let text_size = 114.0/distance*160.0;
+    let offset = 114.0/distance*-16.0;
+    
+    let screen_coords = camera.world_to_screen_coords(self.data().position+self.data().offset, window_dim);
+    draw_calls.push(DrawCall::draw_text_basic_centered(screen_coords+Vector2::new(0.0, offset-self.data().offset.y), 
+                                           Vector2::new(text_size, text_size), 
+                                           Vector4::new(0.482352941, 0.407843137, 0.933333333, 1.0), 
+                                           "LE: ".to_owned() + &(self.data().life_expectancy).to_string() + &"/".to_string() + &(self.data().max_life_expectancy).to_string(), 
+                                           "Arial".to_string()));
   }
 }

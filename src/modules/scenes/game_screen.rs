@@ -615,7 +615,7 @@ impl Scene for GameScreen {
     
     for appliance in &self.appliances {
       let map = &self.map;
-      appliance.draw(map, &self.camera, self.data.window_dim.y as f32/self.data.window_dim.x as f32, draw_calls);
+      appliance.draw(map, &self.camera, Vector2::new(self.data.window_dim.x as f32, self.data.window_dim.y as f32), draw_calls);
     }
     
     for weapon in &self.weapons {
