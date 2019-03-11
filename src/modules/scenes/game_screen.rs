@@ -543,8 +543,9 @@ impl GameScreen {
       let map = &mut self.map;
       let bin = &mut self.bin;
       let money = &mut self.money;
+      let selected_appliance = &mut self.selected_appliance;
       
-      update_game(map, appliances, foods, weapons, m_sizes, DELTA_STEP);
+      update_game(map, appliances, foods, weapons, selected_appliance, m_sizes, DELTA_STEP);
       collisions(map, foods, weapons, m_sizes, bin, money, DELTA_STEP);
       
       if self.foods.len() == 0 {
@@ -635,6 +636,7 @@ impl Scene for GameScreen {
       _ => {
         if let Some(idx) = self.selected_appliance {
           let map = &self.map;
+          //here is our error
           self.appliances[idx].draw_range(map, draw_calls);
           
           // UI 
@@ -699,7 +701,21 @@ impl Scene for GameScreen {
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Speed: x".to_owned() + &(self.game_speed).to_string(), 
                                            "Arial".to_string()));
-                                           
+    /*
+    draw_calls.push(
+        DrawCall::draw_coloured(Vector2::new(self.data.window_dim.x*0.5, self.data.window_dim.y*0.5),
+                                Vector2::new(self.data.window_dim.x*5.0, self.data.window_dim.y*5.0),
+                                Vector4::new(1.0, 1.0, 1.0, 1.0),
+                                90.0)
+    );
+  //   draw_calls.push(DrawCall::add_instanced_sprite_sheet(Vector2::new(self.data.window_dim.x*0.35, self.data.window_dim.y*0.6), Vector2::new(500.0, 500.0), 90.0, String::from("Logo"), Vector3::new(0,0,1)));
+   // draw_calls.push(DrawCall::draw_instanced(String::from("Logo"), "Logo".to_string()));
     
+    draw_calls.push(
+      DrawCall::draw_textured(Vector2::new(self.data.window_dim.x*0.35, self.data.window_dim.y*0.6), 
+                              Vector2::new(500.0, 500.0),
+                              90.0,
+                              String::from("Logo"))
+    );*/
   }
 }

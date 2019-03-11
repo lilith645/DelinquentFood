@@ -96,7 +96,7 @@ fn main() {
   graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Strawberry.glb".to_string());
   graphics.add_model("Banana".to_string(), "./windys-modeling-agency/Unfinished/Banana.glb".to_string());
   
-  graphics.create_instance_buffer("EntityBuffer".to_string());
+  graphics.create_instance_buffer("Logo".to_string());
   
   graphics.load_shaders();
   graphics.init();
