@@ -16,10 +16,10 @@ pub struct Fridge {
 impl Fridge {
   pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, map: &Map) -> Fridge {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
-    let life_expectancy = 4;
+    let life_expectancy = 3;
     let range = 1;
-    let cost = 50;
-    let fire_rate = 1.0;
+    let cost = 100;
+    let fire_rate = 2.0;
     
     Fridge {
       data: ApplianceData::new(tile, size, rotation, "Fridge".to_string(), life_expectancy, range, fire_rate, cost, map),

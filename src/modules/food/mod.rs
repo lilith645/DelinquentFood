@@ -127,6 +127,10 @@ pub trait Food: FoodClone {
     self.local_update(map, delta_time);
   }
   
+  fn get_path_num(&self) -> u32 {
+    self.data().path_number
+  }
+  
   fn get_id(&self) -> i32 {
     self.data().id
   }

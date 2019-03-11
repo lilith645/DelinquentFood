@@ -242,6 +242,8 @@ impl GameScreen {
       // Sell tower
       if x_pressed {
         self.money += self.appliances[idx].sell_price();
+        let hex_location = self.appliances[idx].get_tile_location();
+        self.map.set_hexagon_type(hex_location.x, hex_location.y, HexagonType::Open);
         self.appliances.remove(idx);
         self.selected_appliance = None;
       }
@@ -453,7 +455,7 @@ impl GameScreen {
                 let qr = self.appliances[idx].get_qr_location();
                 self.map.set_hexagon_type(qr.x, qr.y, HexagonType::Open);
                 self.appliances.remove(idx);
-                self.selected_appliance = Some(self.appliances.len()-1);
+                self.selected_appliance = Some(self.appliances.len());
                 let dist = Hexagon::hex_distance(Hexagon::new(q,r, "".to_string()), Hexagon::new(qr.x, qr.y, "".to_string()));
                 appliance.moved_tiles(dist);
                 self.map.unhighlight_all_hexs();
@@ -639,16 +641,19 @@ impl Scene for GameScreen {
           //here is our error
           self.appliances[idx].draw_range(map, draw_calls);
           
+          let clean_price = self.appliances[idx].clean_cost();
+          let sell_price = self.appliances[idx].sell_price();
+          
           // UI 
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-96.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key X: Sells selected appliance".to_string(), 
+                                           "Key X: Sell appliance $".to_owned() + &(sell_price).to_string(), 
                                            "Arial".to_string()));
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key C: Cleans selected appliance".to_string(), 
+                                           "Key C: Cleans appliance $".to_owned() + &(clean_price).to_string(), 
                                            "Arial".to_string()));
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-160.0), 
                                            Vector2::new(128.0, 128.0), 
@@ -682,12 +687,12 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 1: Buy Dishwasher $100".to_string(), 
+                                           "Key 1: Buy Dishwasher $50".to_string(), 
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-32.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 2: Buy Fridge $50".to_string(), 
+                                           "Key 2: Buy Fridge $100".to_string(), 
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-64.0), 
                                            Vector2::new(128.0, 128.0), 

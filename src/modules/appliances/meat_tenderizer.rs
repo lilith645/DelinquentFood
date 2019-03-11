@@ -16,10 +16,10 @@ pub struct MeatTenderizer {
 impl MeatTenderizer {
   pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, map: &Map) -> MeatTenderizer {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
-    let life_expectancy = 3;
+    let life_expectancy = 4;
     let range = 1;
     let cost = 80;
-    let fire_rate = 2.0;
+    let fire_rate = 3.0;
     
     MeatTenderizer {
       data: ApplianceData::new(tile, size, rotation, "MeatTenderizer".to_string(), life_expectancy, range, fire_rate, cost, map),

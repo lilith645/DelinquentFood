@@ -18,7 +18,7 @@ impl Dishwasher {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
     let life_expectancy = 2;
     let range = 3;
-    let cost = 100;
+    let cost = 50;
     let fire_rate = 1.2;
     
     Dishwasher {

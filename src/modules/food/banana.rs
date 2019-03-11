@@ -10,12 +10,12 @@ pub struct Banana {
 
 impl Banana {
   pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Banana {
-    let health = 20;
+    let health = 30;
     let speed = 15.0;
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
     let size = Vector3::new(1.0, 1.0, 1.0);
-    let sell_price = 5;
+    let sell_price = 2;
     Banana {
       data: FoodData::new(id, position, rotation, size, speed, health, "Bombard".to_string(), path.clone(), location, sell_price),
     }

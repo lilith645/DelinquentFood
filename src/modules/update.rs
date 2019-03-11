@@ -12,6 +12,8 @@ pub fn update_game(map: &mut Map, appliances: &mut Vec<Box<Appliance>>, foods: &
     food.update(map, delta_time);
   }
   
+  foods.sort_by(|a,b| (a.get_path_num()).cmp(&b.get_path_num()).reverse());
+  
   let mut offset = 0;
   for i in 0..appliances.len() {
     if offset > i {

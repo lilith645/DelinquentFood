@@ -91,11 +91,11 @@ pub trait Appliance: ApplianceClone {
   }
   
   fn sell_price(&self) -> i32 {
-    (self.data().buy_cost as f32*0.6).ceil() as i32
+    ((self.data().buy_cost as f32*0.6)*(self.data().life_expectancy as f32/self.data().max_life_expectancy as f32)).ceil() as i32
   }
   
   fn clean_cost(&self) -> i32 {
-    (self.data().max_life_expectancy - self.data().life_expectancy) * 20
+    ((self.data().max_life_expectancy - self.data().life_expectancy) as f32 * (self.data().buy_cost as f32*0.6)*(1.0/self.data().max_life_expectancy as f32)).ceil() as i32
   }
   
   fn upgrade_cost(&self) -> i32;
@@ -103,6 +103,10 @@ pub trait Appliance: ApplianceClone {
   
   fn get_position(&self) -> Vector3<f32> {
     self.data().position
+  }
+  
+  fn get_tile_location(&self) -> Vector2<i32> {
+    self.data().tile_location
   }
   
   fn get_range(&self) -> u32 {
