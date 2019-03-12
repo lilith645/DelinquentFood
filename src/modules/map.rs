@@ -25,7 +25,7 @@ impl Map {
     let mut offset = 1;
     let mut y = 0;
     
-    if let Ok(f) = File::open("./resources/Maps/testmap.ini") {
+    if let Ok(f) = File::open("./resources/Maps/MediumMap.ini") {
       println!("Settings file exists");
       let f = BufReader::new(f);
       

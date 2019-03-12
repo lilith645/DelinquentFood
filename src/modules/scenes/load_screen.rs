@@ -62,8 +62,8 @@ impl Scene for LoadScreen {
     let (width, height) = (dim.x as f32, dim.y as f32);
     
     if self.first_loop {
-     // draw_calls.push(DrawCall::load_texture("LifeIndicatorFull".to_string()));
-      //draw_calls.push(DrawCall::load_texture("LifeIndicatorEmpty".to_string()));
+      draw_calls.push(DrawCall::load_texture("LifeIndicatorFull".to_string()));
+      draw_calls.push(DrawCall::load_texture("LifeIndicatorEmpty".to_string()));
       
       draw_calls.push(DrawCall::load_model("Tower".to_string()));
       draw_calls.push(DrawCall::load_model("Lance".to_string()));
@@ -83,6 +83,8 @@ impl Scene for LoadScreen {
       draw_calls.push(DrawCall::load_model("Plate".to_string()));
       draw_calls.push(DrawCall::load_model("Bombard".to_string()));
       draw_calls.push(DrawCall::load_model("MeatTenderizer".to_string()));
+      draw_calls.push(DrawCall::load_model("Cake".to_string()));
+      draw_calls.push(DrawCall::load_model("CoffeeMachine".to_string()));
     }
     
     draw_calls.push(DrawCall::set_texture_scale(1.0));

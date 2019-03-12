@@ -13,7 +13,7 @@ impl Dish {
   pub fn new() -> Dish {
     let velocity = 80.0;
     let rotation_velocity = Vector3::new(360.0, 360.0, 360.0);
-    let damage = 6;
+    let damage = 8;
     let pierce = 2;
     let timer = 0.0;
     let scale = Vector3::new(1.0, 1.0, 1.0);

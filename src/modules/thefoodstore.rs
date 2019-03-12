@@ -1,6 +1,5 @@
-use crate::modules::food::{Food, Strawberry, Banana};
+use crate::modules::food::{Food, Strawberry, Banana, Cake};
 use crate::modules::map::Map;
-
 
 use cgmath::{Vector3};
 
@@ -69,8 +68,11 @@ impl FoodStore {
       offset += 50;
     }
     
+    let mut wave6 = Vec::new();
+    wave6.push((Box::new(Cake::new(0, food_pos, path.clone(), tile_loc)) as Box<Food>, 0 as f32));
+    
     FoodStore {
-      waves: vec!(wave1, wave2, wave3, wave4, wave5),
+      waves: vec!(wave1, wave2, wave3, wave4, wave5, wave6),
       current_idx: 0,
       current_wave: 0,
       wave_delta: 0.0,

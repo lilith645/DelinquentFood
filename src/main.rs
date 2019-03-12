@@ -65,9 +65,9 @@ fn main() {
   graphics.preload_texture(String::from("Logo"), 
                            String::from("./resources/Textures/Logo.png"));
   
-  graphics.preload_texture(String::from("LifeIndicatorFull"), 
+  graphics.add_texture(String::from("LifeIndicatorFull"), 
                            String::from("./resources/Textures/UI/LifeExpectancyFull.png"));
-  graphics.preload_texture(String::from("LifeIndicatorEmpty"), 
+  graphics.add_texture(String::from("LifeIndicatorEmpty"), 
                            String::from("./resources/Textures/UI/LifeExpectancyEmpty.png"));
   
   graphics.add_model("Lance".to_string(), "./windys-modeling-agency/Unfinished/Lance.glb".to_string());
@@ -83,18 +83,20 @@ fn main() {
   graphics.add_model("RedHexagon".to_string(), "./windys-modeling-agency/Unfinished/RedHexagon.glb".to_string());
   graphics.add_model("Bombard".to_string(), "./windys-modeling-agency/Unfinished/Bombard.glb".to_string());
   
-  // Towers
+  // Appliances
   graphics.add_model("Fridge".to_string(), "./windys-modeling-agency/Unfinished/Fridge.glb".to_string());
   graphics.add_model("Dishwasher".to_string(), "./windys-modeling-agency/Unfinished/TowerStart.glb".to_string());
   graphics.add_model("MeatTenderizer".to_string(), "./windys-modeling-agency/Unfinished/MeatTenderizer.glb".to_string());
+  graphics.add_model("CoffeeMachine".to_string(), "./windys-modeling-agency/Unfinished/StandInModels/CoffeeMachine.glb".to_string());
   
   // Weapons
   graphics.add_model("Spoon".to_string(), "./windys-modeling-agency/Unfinished/Spoon.glb".to_string());
   graphics.add_model("Plate".to_string(), "./windys-modeling-agency/Unfinished/Plate.glb".to_string());
   
-  // Enemies
+  // Food
   graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Strawberry.glb".to_string());
   graphics.add_model("Banana".to_string(), "./windys-modeling-agency/Unfinished/Banana.glb".to_string());
+  graphics.add_model("Cake".to_string(), "./windys-modeling-agency/Unfinished/StandInModels/Cake.glb".to_string());
   
   graphics.create_instance_buffer("Logo".to_string());
   

@@ -6,8 +6,8 @@ use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
 use crate::modules::food::Food;
-use crate::modules::appliances::{Dishwasher, Fridge, MeatTenderizer};
-use crate::modules::appliances::traits::Appliance;
+use crate::modules::appliances::{Dishwasher, Fridge, MeatTenderizer, CoffeeMachine};
+use crate::modules::appliances::traits::{Appliance, TargetPriority};
 use crate::modules::weapons::{Weapon};
 use crate::modules::hexagon::{Layout, Hexagon, HexagonType};
 use crate::modules::thefoodstore::FoodStore;
@@ -35,6 +35,7 @@ pub struct GameScreen {
   zoom: f32,
   escaped_pressed_last_frame: bool,
   space_pressed_last_frame: bool,
+  t_pressed_last_frame: bool,
   screen_offset: Vector2<f32>,
   camera: camera::Camera,
   rng: rand::prelude::ThreadRng,
@@ -77,6 +78,7 @@ impl GameScreen {
       zoom: 1.0, // 0.5 to 2.0
       escaped_pressed_last_frame: false,
       space_pressed_last_frame: false,
+      t_pressed_last_frame: false,
       screen_offset: Vector2::new(0.0, 0.0),
       camera: camera,
       rng: thread_rng(),
@@ -104,6 +106,8 @@ impl GameScreen {
       data: SceneData::new(window_size, model_sizes),
       zoom: 1.0, // 0.5 to 2.0
       escaped_pressed_last_frame: false,
+      space_pressed_last_frame: false,
+      t_pressed_last_frame: false,
       screen_offset,
       camera,
       rng,
@@ -115,7 +119,6 @@ impl GameScreen {
       weapons,
       ray_position: Vector2::new(0.0, 0.0),
       game_speed,
-      space_pressed_last_frame: false,
       mouse_state: MouseState::World,
       bin,
       placing_appliance: None,
@@ -174,6 +177,7 @@ impl GameScreen {
     let one_pressed = self.data.keys.one_pressed();
     let two_pressed = self.data.keys.two_pressed();
     let three_pressed = self.data.keys.three_pressed();
+    let four_pressed = self.data.keys.four_pressed();
     let mut w_pressed = self.data.keys.w_pressed();
     let mut a_pressed = self.data.keys.a_pressed();
     let mut s_pressed = self.data.keys.s_pressed();
@@ -185,7 +189,7 @@ impl GameScreen {
     let p_pressed = self.data().keys.p_pressed();
     let x_pressed = self.data().keys.x_pressed();
     
-    self.escaped_pressed_last_frame = escape_pressed;
+    let t_pressed = self.data().keys.t_pressed();
     
     match self.update_controller_input() {
       (w, a, s, d, x_offset, y_offset) => {
@@ -237,8 +241,37 @@ impl GameScreen {
                                Box::new(MeatTenderizer::new(Vector2::new(0,0), Vector3::new(3.0, 3.0, 3.0), Vector3::new(0.0, 0.0, 0.0), &self.map))
                               );
     }
+    if four_pressed {
+      self.start_placing_tower(mouse, 
+                               Box::new(CoffeeMachine::new(Vector2::new(0,0), Vector3::new(0.3, 0.3, 0.3), Vector3::new(0.0, 0.0, 0.0), &self.map))
+                              );
+    }
     
     if let Some(idx) = self.selected_appliance {
+      // Change target priority for selected appliance
+      if t_pressed && !self.t_pressed_last_frame {
+        match self.appliances[idx].get_targeting() {
+          TargetPriority::First => {
+            self.appliances[idx].set_targeting(TargetPriority::Last);
+          },
+          TargetPriority::Last => {
+            self.appliances[idx].set_targeting(TargetPriority::Close);
+          },
+          TargetPriority::Close => {
+            self.appliances[idx].set_targeting(TargetPriority::Far);
+          },
+          TargetPriority::Far => {
+            self.appliances[idx].set_targeting(TargetPriority::Strong);
+          },
+          TargetPriority::Strong => {
+            self.appliances[idx].set_targeting(TargetPriority::Weak);
+          },
+          TargetPriority::Weak => {
+            self.appliances[idx].set_targeting(TargetPriority::First);
+          },
+        }
+      }
+      
       // Sell tower
       if x_pressed {
         self.money += self.appliances[idx].sell_price();
@@ -280,6 +313,9 @@ impl GameScreen {
         }
       }
     }
+    
+    self.escaped_pressed_last_frame = escape_pressed;
+    self.t_pressed_last_frame = t_pressed;
   }
   
   pub fn update_controller_input(&mut self) -> (bool, bool, bool, bool, f32, f32) {
@@ -645,17 +681,23 @@ impl Scene for GameScreen {
           let sell_price = self.appliances[idx].sell_price();
           
           // UI 
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-96.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+32.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key t: Cycle targeting priority".to_string(), 
+                                           "Arial".to_string()));
+          
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key X: Sell appliance $".to_owned() + &(sell_price).to_string(), 
                                            "Arial".to_string()));
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-160.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key C: Cleans appliance $".to_owned() + &(clean_price).to_string(), 
                                            "Arial".to_string()));
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-160.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-192.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key M: Moves selected appliance".to_string(), 
@@ -687,17 +729,22 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 1: Buy Dishwasher $50".to_string(), 
+                                           "Key 1: Buy Dishwasher $65".to_string(), 
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-32.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 2: Buy Fridge $100".to_string(), 
+                                           "Key 2: Buy Fridge $85".to_string(), 
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-64.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 3: Buy MeatTenderizer $80".to_string(), 
+                                           "Key 3: Buy MeatTenderizer $75".to_string(), 
+                                           "Arial".to_string()));
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-96.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key 4: Buy Coffee Machine $150".to_string(), 
                                            "Arial".to_string()));
     
     // Game Speed

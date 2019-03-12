@@ -346,6 +346,20 @@ impl Hexagon {
     neigbors
   }
   
+  pub fn generate_directional_hexagon_range(radius: i32, texture: String) -> Vec<Hexagon> {
+    let mut hexagons: Vec<Hexagon> = Vec::new();
+    
+    let q = 0;
+    let r = 0;
+    for i in -radius..radius+1 {
+      hexagons.push(Hexagon::new(q,i,texture.to_string()));
+      hexagons.push(Hexagon::new(i,r,texture.to_string()));
+      hexagons.push(Hexagon::new(i,i*-1, texture.to_string()));
+    }
+    
+    hexagons
+  }
+  
   pub fn generate_hexagon_range(radius: i32, texture: String) -> Vec<Hexagon> {
     let mut hexagons: Vec<Hexagon> = Vec::new();
     
@@ -354,7 +368,6 @@ impl Hexagon {
       let r2 = radius.min(-q + radius);
       
       for r in r1..r2+1 {
-        let dist = Hexagon::hex_distance(Hexagon::new(0, 0, "".to_string()), Hexagon::new(q, r, "".to_string()))%4;
         hexagons.push(Hexagon::new(q, r, texture.to_string()));
       }
     }

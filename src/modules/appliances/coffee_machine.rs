@@ -9,26 +9,26 @@ use crate::modules::hexagon::Hexagon;
 use cgmath::{InnerSpace, Deg, Angle, Vector2, Vector3};
 
 #[derive(Clone)]
-pub struct Dishwasher {
+pub struct CoffeeMachine {
   data: ApplianceData,
 }
 
-impl Dishwasher {
-  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, map: &Map) -> Dishwasher {
+impl CoffeeMachine {
+  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, map: &Map) -> CoffeeMachine {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
-    let life_expectancy = 2;
-    let range = 3;
-    let cost = 65;
-    let fire_rate = 1.2;
+    let life_expectancy = 8;
+    let range = 2;
+    let cost = 150;
+    let buffing_rate = 0.8;
     let directional_range = false;
     
-    Dishwasher {
-      data: ApplianceData::new(tile, size, rotation, "Dishwasher".to_string(), life_expectancy, range, fire_rate, cost, directional_range, map),
+    CoffeeMachine {
+      data: ApplianceData::new(tile, size, rotation, "CoffeeMachine".to_string(), life_expectancy, range, buffing_rate, cost, directional_range, map),
     }
   }
 }
 
-impl Appliance for Dishwasher {
+impl Appliance for CoffeeMachine {
   fn data(&self) -> &ApplianceData {
     &self.data
   }
@@ -43,31 +43,11 @@ impl Appliance for Dishwasher {
       if *reference == "Hexagon".to_string() {
         self.data.offset.y += size.y;
       }
-      if *reference == "Dishwasher".to_string() {
-        self.data.offset.y += size.y*0.5;
-      }
-    }
-    
-    let some_food = self.get_prioritised_food(foods);
-    if let Some(food) = some_food {
-      self.data.rotation.y = self.rotate_towards(self.data.position, &food, 90.0);
-      
-      if self.data.charge >= self.data.fire_rate {
-        let loc = food.get_location();
-        let direction = Vector2::new(loc.x-self.data.position.x, loc.y-self.data.position.z).normalize();
-        
-        let mut weapon = Dish::new();
-        weapon.launch(self.data.position+self.data.offset, self.data.tile_location, self.data.rotation, direction);
-        
-        weapons.push(Box::new(weapon));
-        
-        self.data.charge = 0.0;
-      }
     }
     
     self.data.charge += delta_time;
     
-    Vec::new()
+    vec!((Buff::Range, self.get_qr_location(), self.get_range()))
   }
   
   fn fire(&mut self) {

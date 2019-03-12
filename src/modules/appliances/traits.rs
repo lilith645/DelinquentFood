@@ -13,7 +13,19 @@ pub enum TargetPriority {
   First,
   Last,
   Close,
-  //Far,
+  Far,
+  Strong,
+  Weak,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum Buff {
+  Range,
+  AttackSpeed,
+  AttackDamage,
+  SellPrice, // sells for more than standard 60%
+  Pierce,
+  
 }
 
 #[derive(Clone)]
@@ -28,14 +40,16 @@ pub struct ApplianceData {
   pub charge: f32,
   pub fire_rate: f32,
   pub target: TargetPriority,
+  pub buffs: Vec<Buff>,
   pub life_expectancy: i32,
   pub max_life_expectancy: i32,
   pub draw_range: bool,
   pub buy_cost: i32,
+  pub directional_range: bool,
 }
 
 impl ApplianceData {
-  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, model: String, life: i32, rng: u32, fire_rate: f32, cost: i32, map: &Map) -> ApplianceData {
+  pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, model: String, life: i32, rng: u32, fire_rate: f32, cost: i32, directional_range: bool, map: &Map) -> ApplianceData {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
     
     ApplianceData {
@@ -49,10 +63,12 @@ impl ApplianceData {
       charge: 0.0,
       fire_rate,
       target: TargetPriority::First,
+      buffs: Vec::new(),
       life_expectancy: life,
       max_life_expectancy: life,
       draw_range: false,
       buy_cost: cost,
+      directional_range,
     }
   }
 }
@@ -77,7 +93,7 @@ pub trait Appliance: ApplianceClone {
   fn data(&self) -> &ApplianceData;
   fn mut_data(&mut self) -> &mut ApplianceData;
   
-  fn update(&mut self, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, map: &Map, delta_time: f32);
+  fn update(&mut self, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, map: &Map, delta_time: f32) -> Vec<(Buff, Vector2<i32>, u32)>;
   
   fn fire(&mut self);
   
@@ -110,7 +126,7 @@ pub trait Appliance: ApplianceClone {
   }
   
   fn get_range(&self) -> u32 {
-    self.data().range
+    self.data().range + if self.data().buffs.contains(&Buff::Range) { 1 } else { 0 }
   }
   
   fn get_qr_location(&self) -> Vector2<i32> {
@@ -137,6 +153,20 @@ pub trait Appliance: ApplianceClone {
     self.mut_data().life_expectancy -= distance;
   }
   
+  fn get_targeting(&self) -> TargetPriority {
+    self.data().target.clone()
+  }
+  
+  fn set_targeting(&mut self, new_target: TargetPriority) {
+    self.mut_data().target = new_target;
+  }
+  
+  fn apply_buff(&mut self, buff: Buff) {
+    if !self.data().buffs.contains(&buff) {
+      self.mut_data().buffs.push(buff);
+    }
+  }
+  
   fn rotate_towards(&self, position: Vector3<f32>, food: &Box<Food>, angle_offset: f32) -> f32 {
     let loc = food.get_location();
     let direction = Vector2::new(loc.x-position.x, loc.y-position.z).normalize();
@@ -152,6 +182,92 @@ pub trait Appliance: ApplianceClone {
     self.mut_data().position.z = pos.y;
   }
   
+  fn get_prioritised_food(&self, foods: &mut Vec<Box<Food>>) -> Option<Box<Food>> {
+    let mut food = None;
+    
+    if foods.len() > 0 {
+      let mut food_in_range = Vec::new();
+      let mut food_distances = Vec::new();
+      
+      for food in foods {
+        let location = food.get_tile_location();
+        let dist = Hexagon::hex_distance(Hexagon::new(self.data().tile_location.x, self.data().tile_location.y, "".to_string()), Hexagon::new(location.x, location.y, "".to_string()));
+      
+        if dist <= self.get_range() as i32 {
+          food_in_range.push(food.clone());
+          food_distances.push(dist);
+        }
+      }
+      
+      if food_in_range.len() == 0 {
+        return food;
+      }
+      
+      match &self.data().target {
+        TargetPriority::First => {
+          food = Some(food_in_range[0].clone());
+        },
+        TargetPriority::Last => {
+          food = Some(food_in_range[food_in_range.len()-1].clone());
+        },
+        TargetPriority::Close => {
+          let mut idx = 0;
+          let mut closest_distance = food_distances[idx];
+          for i in 1..food_distances.len() {
+            let other_dist = food_distances[i];
+            
+            if other_dist < closest_distance {
+              idx = i;
+              closest_distance = other_dist;
+            }
+          }
+          
+          food = Some(food_in_range[idx].clone());
+        },
+        TargetPriority::Far => {
+          let mut idx = 0;
+          let mut furthest_distance = food_distances[idx];
+          for i in 1..food_distances.len() {
+            let other_dist = food_distances[i];
+            
+            if other_dist > furthest_distance {
+              idx = i;
+              furthest_distance = other_dist;
+            }
+          }
+          
+          food = Some(food_in_range[idx].clone());
+        },
+        TargetPriority::Strong => {
+          let mut idx = 0;
+          let mut most_health = food_in_range[idx].get_health();
+          for i in (1..food_in_range.len()).rev() {
+            let other_food_health = food_in_range[i].get_health();
+            if other_food_health > most_health {
+              most_health = other_food_health;
+              idx = i;
+            }
+          }
+          food = Some(food_in_range[idx].clone());
+        },
+        TargetPriority::Weak => {
+          let mut idx = 0;
+          let mut least_health = food_in_range[idx].get_health();
+          for i in (1..food_in_range.len()).rev() {
+            let other_food_health = food_in_range[i].get_health();
+            if other_food_health < least_health {
+              least_health = other_food_health;
+              idx = i;
+            }
+          }
+          food = Some(food_in_range[idx].clone());
+        },
+      }
+    }
+    
+    food
+  }
+  
   fn should_draw_range(&mut self, should_draw: bool) {
     self.mut_data().draw_range = should_draw;
   }
@@ -164,8 +280,15 @@ pub trait Appliance: ApplianceClone {
     // draw hexagons
     let mut hexagons: Vec<Hexagon> = Vec::new();
     
-    let radius = self.data().range as i32;
-    let hexagons = Hexagon::generate_hexagon_range(radius, "PurpleHexagon".to_string());
+   
+    let radius = self.get_range() as i32;
+    let hexagons = {
+      if self.data().directional_range {
+        Hexagon::generate_directional_hexagon_range(radius, "PurpleHexagon".to_string())
+      } else {
+        Hexagon::generate_hexagon_range(radius, "PurpleHexagon".to_string())
+      }
+    };
     
     for hexagon in hexagons {
       let height = 1.2;
@@ -188,14 +311,56 @@ pub trait Appliance: ApplianceClone {
     
     let cam_pos = camera.get_position();
     let distance = (self.data().position-cam_pos).magnitude();
-    let text_size = 114.0/distance*160.0;
-    let offset = 114.0/distance*-16.0;
+    let indicator_size = 114.0/distance*10.0;
+    let offset = 114.0/distance*-8.0;
+    let target_text_size = 114.0/distance*160.0;
+    let target_offset = 114.0/distance*-38.0;
     
     let screen_coords = camera.world_to_screen_coords(self.data().position+self.data().offset, window_dim);
-    draw_calls.push(DrawCall::draw_text_basic_centered(screen_coords+Vector2::new(0.0, offset-self.data().offset.y), 
-                                           Vector2::new(text_size, text_size), 
-                                           Vector4::new(0.482352941, 0.407843137, 0.933333333, 1.0), 
-                                           "LE: ".to_owned() + &(self.data().life_expectancy).to_string() + &"/".to_string() + &(self.data().max_life_expectancy).to_string(), 
+    
+    let x_offset = -(self.max_life_expectancy() as f32 * 0.5 * indicator_size) + indicator_size*0.5;
+    for i in 0..self.max_life_expectancy() {
+      let texture = {
+        if i+1 > self.current_life_expectancy() {
+          "LifeIndicatorEmpty".to_string()
+        } else {
+          "LifeIndicatorFull".to_string()
+        }
+      };
+      draw_calls.push(
+        DrawCall::draw_textured(screen_coords+Vector2::new(x_offset+i as f32 * indicator_size, offset-self.data().offset.y), 
+                                Vector2::new(indicator_size, indicator_size),
+                                90.0,
+                                texture)
+      );
+    }
+    
+    let target_name;
+    match self.get_targeting() {
+      TargetPriority::First => {
+        target_name = "First".to_string();
+      },
+      TargetPriority::Last => {
+        target_name = "Last".to_string();
+      },
+      TargetPriority::Close => {
+        target_name = "Close".to_string();
+      },
+      TargetPriority::Far => {
+        target_name = "Far".to_string();
+      },
+      TargetPriority::Strong => {
+        target_name = "Strong".to_string();
+      },
+      TargetPriority::Weak => {
+        target_name = "Weak".to_string();
+      },
+    }
+    
+    draw_calls.push(DrawCall::draw_text_basic_centered(screen_coords+Vector2::new(0.0, target_offset-self.data().offset.y), 
+                                           Vector2::new(target_text_size, target_text_size), 
+                                           Vector4::new(0.076078431, 1.0, 0.94745098, 1.0), 
+                                           "(".to_owned() + &target_name + &")".to_string(), 
                                            "Arial".to_string()));
   }
 }

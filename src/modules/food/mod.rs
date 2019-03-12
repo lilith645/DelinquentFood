@@ -1,8 +1,10 @@
 pub use self::strawberry::Strawberry;
 pub use self::banana::Banana;
+pub use self::cake::Cake;
 
 mod strawberry;
 mod banana;
+mod cake;
 
 use maat_graphics::DrawCall;
 
@@ -125,6 +127,10 @@ pub trait Food: FoodClone {
     self.mut_data().position.z += direction.y*speed*delta_time;
     
     self.local_update(map, delta_time);
+  }
+  
+  fn get_health(&self) -> i32 {
+    self.data().health
   }
   
   fn get_path_num(&self) -> u32 {

@@ -4,25 +4,25 @@ use crate::modules::map::Map;
 use cgmath::{Vector2, Vector3};
 
 #[derive(Clone)]
-pub struct Strawberry {
+pub struct Cake {
   data: FoodData,
 }
 
-impl Strawberry {
-  pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Strawberry {
-    let health = 85;
+impl Cake {
+  pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Cake {
+    let health = 400;
     let speed = 10.0;
-    let position = Vector3::new(position.x, 0.0, position.y);
+    let position = Vector3::new(position.x, 50.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
-    let size = Vector3::new(1.5, 1.5, 1.5);
-    let sell_price = 5;
-    Strawberry {
-      data: FoodData::new(id, position, rotation, size, speed, health, "Strawberry".to_string(), path.clone(), location, sell_price),
+    let size = Vector3::new(4.0, 4.0, 4.0);
+    let sell_price = 500;
+    Cake {
+      data: FoodData::new(id, position, rotation, size, speed, health, "Cake".to_string(), path.clone(), location, sell_price),
     }
   }
 }
 
-impl Food for Strawberry {
+impl Food for Cake {
   fn data(&self) -> &FoodData {
     &self.data
   }
@@ -32,7 +32,7 @@ impl Food for Strawberry {
   }
   
   fn local_update(&mut self, map: &Map, delta_time: f32) {
-    self.data.rotation.y += 90.0*delta_time;//angle.0 as f32+90.0;
+    self.data.rotation.y += 60.0*delta_time;//angle.0 as f32+90.0;
     self.data.total_dt += delta_time*0.5;
     if self.data.total_dt > 3.14 {
       self.data.total_dt -= 3.14;
