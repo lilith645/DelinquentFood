@@ -726,25 +726,31 @@ impl Scene for GameScreen {
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Wave: ".to_owned() + &(self.the_food_store.wave_number() + 1).to_string(), 
                                            "Arial".to_string()));
+                                           
+    let t_dishwasher = Dishwasher::new(Vector2::new(0,0), Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0), &self.map);
+    let t_fridge = Fridge::new(Vector2::new(0,0), Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0), &self.map);
+    let t_tenderiser = MeatTenderizer::new(Vector2::new(0,0), Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0), &self.map);
+    let t_coffee = CoffeeMachine::new(Vector2::new(0,0), Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0), &self.map);
+    
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 1: Buy Dishwasher $65".to_string(), 
+                                           "Key 1: Buy Dishwasher $".to_owned() + &(t_dishwasher.buy_cost()).to_string(), 
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-32.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 2: Buy Fridge $85".to_string(), 
+                                           "Key 2: Buy Fridge $".to_owned() + &(t_fridge.buy_cost()).to_string(),
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-64.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 3: Buy MeatTenderizer $75".to_string(), 
+                                           "Key 3: Buy MeatTenderizer $".to_owned() + &(t_tenderiser.buy_cost()).to_string(),
                                            "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-96.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Key 4: Buy Coffee Machine $150".to_string(), 
+                                           "Key 4: Buy Coffee Machine $".to_owned() + &(t_coffee.buy_cost()).to_string(),
                                            "Arial".to_string()));
     
     // Game Speed

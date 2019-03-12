@@ -49,19 +49,30 @@ impl Appliance for MeatTenderizer {
     if let Some(food) = some_food {
       self.data.rotation.y = self.rotate_towards(self.data.position, &food, 90.0);
       
-      if self.data.charge >= self.data.fire_rate {
+      if self.data.charge >= self.get_fire_rate() {
         let loc = food.get_location();
         let location = food.get_tile_location();
-        let direction = Vector2::new(loc.x-self.data.position.x, loc.y-self.data.position.z).normalize();
+        let qr = self.get_qr_location();
+        let hex = Hexagon::new(qr.x, qr.y, "".to_string());
+        let some_hex_direction = Hexagon::get_hex_direction(hex.clone(), Hexagon::new(location.x, location.y, "".to_string()));
         
-        let mut weapon = Tenderizer::new();
-        let pos = map.get_tile_position(location.x, location.y);
-        let position = Vector3::new(pos.x, self.data.position.y, pos.y);
-        weapon.launch(position, Vector2::new(location.x, location.y), Vector3::new(0.0, 90.0, 0.0), Vector2::new(0.0, 0.0));
-        
-        weapons.push(Box::new(weapon));
-        
-        self.data.charge = 0.0;
+        if let Some(hex_direction) = some_hex_direction {
+          for i in 0..self.get_range() {
+            let mut temp_hex = hex.clone();
+            for j in 0..i+1 {
+              temp_hex = Hexagon::hex_add(temp_hex, hex_direction.clone());
+            }
+            
+            let mut weapon: Box<Weapon> = Box::new(Tenderizer::new());
+            self.add_weapon_modifiers(&mut weapon);
+            let pos = map.get_tile_position(temp_hex.q(), temp_hex.r());
+            let position = Vector3::new(pos.x, self.data.position.y, pos.y);
+            weapon.launch(position, Vector2::new(temp_hex.q(), temp_hex.r()), Vector3::new(0.0, 90.0, 0.0), Vector2::new(0.0, 0.0));
+            
+            weapons.push(weapon);
+          }
+          self.data.charge = 0.0;
+        }
       }
     }
     

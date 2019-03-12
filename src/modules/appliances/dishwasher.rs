@@ -52,14 +52,15 @@ impl Appliance for Dishwasher {
     if let Some(food) = some_food {
       self.data.rotation.y = self.rotate_towards(self.data.position, &food, 90.0);
       
-      if self.data.charge >= self.data.fire_rate {
+      if self.data.charge >= self.get_fire_rate() {
         let loc = food.get_location();
         let direction = Vector2::new(loc.x-self.data.position.x, loc.y-self.data.position.z).normalize();
         
-        let mut weapon = Dish::new();
+        let mut weapon: Box<Weapon> = Box::new(Dish::new());
+        self.add_weapon_modifiers(&mut weapon);
         weapon.launch(self.data.position+self.data.offset, self.data.tile_location, self.data.rotation, direction);
         
-        weapons.push(Box::new(weapon));
+        weapons.push(weapon);
         
         self.data.charge = 0.0;
       }

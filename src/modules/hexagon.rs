@@ -346,6 +346,40 @@ impl Hexagon {
     neigbors
   }
   
+  pub fn get_hex_direction(hex: Hexagon, other_hex: Hexagon) -> Option<Hexagon> {
+    let mut direction = None;
+    
+    if hex.q() == other_hex.q() {
+      if hex.r() < other_hex.r() {
+        direction = Some(HexDirection::SouthEast);
+      } else {
+        direction = Some(HexDirection::NorthWest);
+      }
+    } else if hex.r() == other_hex.r() {
+      if hex.q() < other_hex.q() {
+        direction = Some(HexDirection::East);
+      } else {
+        direction = Some(HexDirection::West);
+      }
+    } else if hex.s() == other_hex.s() {
+      if hex.q() < other_hex.q() {
+        direction = Some(HexDirection::NorthEast);
+      } else {
+        direction = Some(HexDirection::SouthWest);
+      }
+    }
+    
+    if direction.is_some() {
+      Some(Hexagon::hex_direction(direction.unwrap()))
+    } else {
+      None
+    }
+  }
+  
+  pub fn is_on_same_axis(hex: Hexagon, other_hex: Hexagon) -> bool {
+    hex.q() == other_hex.q() || hex.r() == other_hex.r() || hex.s() == other_hex.s()
+  }
+  
   pub fn generate_directional_hexagon_range(radius: i32, texture: String) -> Vec<Hexagon> {
     let mut hexagons: Vec<Hexagon> = Vec::new();
     

@@ -14,7 +14,7 @@ impl ColdSnap {
     let velocity = 0.0;
     let rotation_velocity = Vector3::new(0.0, 0.0, 0.0);
     let damage = 1;
-    let pierce = 1;
+    let pierce = 3;
     let timer = 0.6;
     let scale = Vector3::new(1.9, 0.3, 1.9);
     let debuff = vec!(Debuff::Slow(1.0));
@@ -36,6 +36,7 @@ impl Weapon for ColdSnap {
   fn hit_target(&mut self, food: &mut Box<Food>) {
     food.apply_damage(self.data.damage);
     food.apply_debuffs(self.data.debuffs.clone());
+    self.data.pierce -= 1;
     self.data.food_hit.push(food.get_id());
   }
 }

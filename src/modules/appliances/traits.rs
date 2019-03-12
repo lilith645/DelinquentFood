@@ -25,7 +25,7 @@ pub enum Buff {
   AttackDamage,
   SellPrice, // sells for more than standard 60%
   Pierce,
-  
+  LifeExpectancy,
 }
 
 #[derive(Clone)]
@@ -107,11 +107,18 @@ pub trait Appliance: ApplianceClone {
   }
   
   fn sell_price(&self) -> i32 {
-    ((self.data().buy_cost as f32*0.6)*(self.data().life_expectancy as f32/self.data().max_life_expectancy as f32)).ceil() as i32
+    let modifier = {
+      if self.data().buffs.contains(&Buff::SellPrice) {
+        0.8
+      } else {
+        0.6
+      }
+    };
+    ((self.data().buy_cost as f32*modifier)*(self.current_life_expectancy() as f32/self.max_life_expectancy() as f32)).ceil() as i32
   }
   
   fn clean_cost(&self) -> i32 {
-    ((self.data().max_life_expectancy - self.data().life_expectancy) as f32 * (self.data().buy_cost as f32*0.6)*(1.0/self.data().max_life_expectancy as f32)).ceil() as i32
+    ((self.max_life_expectancy() - self.current_life_expectancy()) as f32 * (self.buy_cost() as f32*0.6)*(1.0/self.max_life_expectancy() as f32)).ceil() as i32
   }
   
   fn upgrade_cost(&self) -> i32;
@@ -142,11 +149,15 @@ pub trait Appliance: ApplianceClone {
   }
   
   fn max_life_expectancy(&self) -> i32 {
-    self.data().max_life_expectancy
+    self.data().max_life_expectancy + if self.data().buffs.contains(&Buff::LifeExpectancy) { 1 } else { 0 }
+  }
+  
+  fn get_fire_rate(&self) -> f32 {
+    self.data().fire_rate * if self.data().buffs.contains(&Buff::AttackSpeed) { 0.8 } else { 1.0 }
   }
   
   fn clean(&mut self) {
-    self.mut_data().life_expectancy = self.data().max_life_expectancy;
+    self.mut_data().life_expectancy = self.max_life_expectancy();
   }
   
   fn moved_tiles(&mut self, distance: i32) {
@@ -182,6 +193,15 @@ pub trait Appliance: ApplianceClone {
     self.mut_data().position.z = pos.y;
   }
   
+  fn add_weapon_modifiers(&self, weapon: &mut Box<Weapon>) {
+    if self.data().buffs.contains(&Buff::Pierce) { 
+      weapon.add_pierce(2);
+    }
+    if self.data().buffs.contains(&Buff::AttackDamage) { 
+      weapon.damage_multiplier(0.5);
+    }
+  }
+  
   fn get_prioritised_food(&self, foods: &mut Vec<Box<Food>>) -> Option<Box<Food>> {
     let mut food = None;
     
@@ -191,9 +211,16 @@ pub trait Appliance: ApplianceClone {
       
       for food in foods {
         let location = food.get_tile_location();
-        let dist = Hexagon::hex_distance(Hexagon::new(self.data().tile_location.x, self.data().tile_location.y, "".to_string()), Hexagon::new(location.x, location.y, "".to_string()));
+        let hex = Hexagon::new(self.data().tile_location.x, self.data().tile_location.y, "".to_string());
+        let other_hex = Hexagon::new(location.x, location.y, "".to_string());
+        let dist = Hexagon::hex_distance(hex.clone(), other_hex.clone());
       
         if dist <= self.get_range() as i32 {
+          if self.data().directional_range && self.get_range() > 1 {
+            if !Hexagon::is_on_same_axis(hex, other_hex) {
+              continue;
+            }
+          }
           food_in_range.push(food.clone());
           food_distances.push(dist);
         }

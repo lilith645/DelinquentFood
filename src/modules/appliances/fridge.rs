@@ -52,7 +52,7 @@ impl Appliance for Fridge {
       if dist <= self.get_range() as i32 {
         self.data.rotation.y = self.rotate_towards(self.data.position, food, 90.0);
         
-        if self.data.charge >= self.data.fire_rate {
+        if self.data.charge >= self.get_fire_rate() {
           let qr = self.get_qr_location();
           let hex = Hexagon::new(qr.x, qr.y, "".to_string());
           
@@ -61,12 +61,13 @@ impl Appliance for Fridge {
           
           for hexagon in hexagons {
             let new_hex = Hexagon::hex_add(hex.clone(), hexagon.clone());
-            let mut weapon = ColdSnap::new();
+            let mut weapon: Box<Weapon> = Box::new(ColdSnap::new());
+            self.add_weapon_modifiers(&mut weapon);
             let pos = map.get_tile_position(new_hex.q(), new_hex.r());
             let position = Vector3::new(pos.x, self.data.position.y, pos.y);
             weapon.launch(position, Vector2::new(new_hex.q(), new_hex.r()), Vector3::new(0.0, 90.0, 0.0), Vector2::new(0.0, 0.0));
             
-            weapons.push(Box::new(weapon));
+            weapons.push(weapon);
           }
           
           self.data.charge = 0.0;

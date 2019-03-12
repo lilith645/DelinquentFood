@@ -16,9 +16,9 @@ pub struct CoffeeMachine {
 impl CoffeeMachine {
   pub fn new(tile: Vector2<i32>, size: Vector3<f32>, rotation: Vector3<f32>, map: &Map) -> CoffeeMachine {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
-    let life_expectancy = 8;
+    let life_expectancy = 5;
     let range = 2;
-    let cost = 150;
+    let cost = 120;
     let buffing_rate = 0.8;
     let directional_range = false;
     
@@ -47,7 +47,10 @@ impl Appliance for CoffeeMachine {
     
     self.data.charge += delta_time;
     
-    vec!((Buff::Range, self.get_qr_location(), self.get_range()))
+    vec!((Buff::AttackSpeed, self.get_qr_location(), self.get_range()),
+         (Buff::LifeExpectancy, self.get_qr_location(), self.get_range()),
+         (Buff::SellPrice, self.get_qr_location(), self.get_range()),
+         (Buff::Range, self.get_qr_location(), self.get_range()))
   }
   
   fn fire(&mut self) {

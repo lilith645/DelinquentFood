@@ -88,6 +88,14 @@ pub trait Weapon: WeaponClone {
   fn data(&self) -> &WeaponData;
   fn mut_data(&mut self) -> &mut WeaponData;
   
+  fn add_pierce(&mut self, extra_pierce: i32) {
+    self.mut_data().pierce += extra_pierce;
+  }
+  
+  fn damage_multiplier(&mut self, percentage: f32) {
+    self.mut_data().damage += (self.data().damage as f32*percentage).ceil() as i32;
+  }
+  
   fn get_hexagon(&self, map: &Map) -> Hexagon {
     map.pixel_to_hex(self.data().position.x, self.data().position.z)
   }
