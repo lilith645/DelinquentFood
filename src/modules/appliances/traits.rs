@@ -324,14 +324,18 @@ pub trait Appliance: ApplianceClone {
   }
   
   fn draw_hologram(&self, map: &Map, draw_calls: &mut Vec<DrawCall>) {
-    draw_calls.push(DrawCall::draw_hologram_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
+    //draw_calls.push(DrawCall::draw_hologram_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
+    draw_calls.push(DrawCall::add_instanced_hologram_model(self.data().model.to_string(), self.data().position+self.data().offset, self.data().size, self.data().rotation));
+    
     if self.data().draw_range {
       self.draw_range(map, draw_calls);
     }
   }
   
   fn draw(&self, map: &Map, camera: &camera::Camera, window_dim: Vector2<f32>, draw_calls: &mut Vec<DrawCall>) { 
-    draw_calls.push(DrawCall::draw_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
+    //draw_calls.push(DrawCall::draw_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
+    draw_calls.push(DrawCall::add_instanced_model(self.data().model.to_string(), self.data().position+self.data().offset, self.data().size, self.data().rotation));
+    
     if self.data().draw_range {
       self.draw_range(map, draw_calls);
     }

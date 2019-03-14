@@ -285,10 +285,9 @@ impl Hexagon {
     
     let radius = map.get_radius();
     
-    draw_calls.push(DrawCall::draw_hologram_model(Vector3::new(position.x, height, position.y),
+    draw_calls.push(DrawCall::add_instanced_hologram_model(self.model.to_string(), Vector3::new(position.x, height, position.y),
                                            Vector3::new(radius as f32/4.0, height, radius as f32/4.0),
-                                           Vector3::new(0.0, 90.0, 0.0), 
-                                           self.model.to_string()));
+                                           Vector3::new(0.0, 90.0, 0.0)));
   }
   
   pub fn draw(&self, map: &Map, layout: &Layout, height: f32, draw_calls: &mut Vec<DrawCall>) {
@@ -296,10 +295,9 @@ impl Hexagon {
     
     let radius = map.get_radius();
     
-    draw_calls.push(DrawCall::draw_model(Vector3::new(position.x, height, position.y),
+    draw_calls.push(DrawCall::add_instanced_model(self.model.to_string(), Vector3::new(position.x, height, position.y),
                                            Vector3::new(radius as f32/3.95, height, radius as f32/3.95),
-                                           Vector3::new(0.0, 90.0, 0.0), 
-                                           self.model.to_string()));
+                                           Vector3::new(0.0, 90.0, 0.0)));
   }
   
   pub fn hex_distance(hexagon: Hexagon, other_hexagon: Hexagon) -> i32 {

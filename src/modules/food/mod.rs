@@ -178,7 +178,8 @@ pub trait Food: FoodClone {
   }
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
-    draw_calls.push(DrawCall::draw_model(self.data().position, self.data().size, self.data().rotation, self.data().model.to_string()));
+    //draw_calls.push(DrawCall::draw_model(self.data().position, self.data().size, self.data().rotation, self.data().model.to_string()));
+    draw_calls.push(DrawCall::add_instanced_model(self.data().model.to_string(), self.data().position, self.data().size, self.data().rotation));
   }
 }
 

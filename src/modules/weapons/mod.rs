@@ -156,6 +156,7 @@ pub trait Weapon: WeaponClone {
     let rotation = self.data().rotation;
     let size = self.data().size;
     let model = self.data().model.to_string();
-    draw_calls.push(DrawCall::draw_model(position, size, rotation, model));
+    //draw_calls.push(DrawCall::draw_model(position, size, rotation, model));
+    draw_calls.push(DrawCall::add_instanced_model(model, position, size, rotation));
   }
 }

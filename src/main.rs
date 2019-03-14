@@ -100,6 +100,24 @@ fn main() {
   
   graphics.create_instance_buffer("Logo".to_string());
   
+  graphics.create_model_instance_buffer("Hexagon".to_string());
+  graphics.create_model_instance_buffer("RedHexagon".to_string());
+  graphics.create_model_instance_buffer("BlueHexagon".to_string());
+  graphics.create_model_instance_buffer("GreenHexagon".to_string());
+  graphics.create_model_instance_buffer("PurpleHexagon".to_string());
+  
+  graphics.create_model_instance_buffer("Fridge".to_string());
+  graphics.create_model_instance_buffer("Dishwasher".to_string());
+  graphics.create_model_instance_buffer("MeatTenderizer".to_string());
+  graphics.create_model_instance_buffer("CoffeeMachine".to_string());
+  
+  graphics.create_model_instance_buffer("Spoon".to_string());
+  graphics.create_model_instance_buffer("Plate".to_string());
+  
+  graphics.create_model_instance_buffer("Strawberry".to_string());
+  graphics.create_model_instance_buffer("Bombard".to_string()); // Banana 
+  graphics.create_model_instance_buffer("Cake".to_string());
+  
   graphics.load_shaders();
   graphics.init();
   

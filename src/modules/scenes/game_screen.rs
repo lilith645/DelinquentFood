@@ -775,5 +775,23 @@ impl Scene for GameScreen {
                               90.0,
                               String::from("Logo"))
     );*/
+    
+    draw_calls.push(DrawCall::draw_instanced_model("Hexagon".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("BlueHexagon".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("RedHexagon".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("PurpleHexagon".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("GreenHexagon".to_string()));
+    
+    draw_calls.push(DrawCall::draw_instanced_model("Fridge".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("Dishwasher".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("MeatTenderizer".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("CoffeeMachine".to_string()));
+    
+    draw_calls.push(DrawCall::draw_instanced_model("Spoon".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("Plate".to_string()));
+    
+    draw_calls.push(DrawCall::draw_instanced_model("Strawberry".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("Bombard".to_string())); // Banana
+    draw_calls.push(DrawCall::draw_instanced_model("Cake".to_string()));
   }
 }
