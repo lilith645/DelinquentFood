@@ -13,7 +13,7 @@ impl Tenderizer {
   pub fn new() -> Tenderizer {
     let velocity = 0.0;
     let rotation_velocity = Vector3::new(0.0, 0.0, 0.0);
-    let damage = 24;
+    let damage = 16;
     let pierce = 10;
     let timer = 0.6;
     let scale = Vector3::new(1.9, 0.3, 1.9);

@@ -134,8 +134,6 @@ impl Map {
         
         if y_pos < 0.0 {
           y_pos = 0.0;
-        } else {
-          println!("{}", self.tile_delta);
         }
       }
       

@@ -51,7 +51,7 @@ pub fn collisions(map: &Map, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<W
         *money += foods[i-offset].sell_price();
       }
       
-      food_children.append(&mut foods[i-offset].get_children());
+      food_children.append(&mut foods[i-offset].get_children(map));
       foods.remove(i-offset);
       offset += 1;
     }

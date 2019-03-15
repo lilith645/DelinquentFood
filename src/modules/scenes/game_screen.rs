@@ -803,5 +803,6 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_instanced_model("Bombard".to_string())); // Banana
     draw_calls.push(DrawCall::draw_instanced_model("Cake".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("Pineapple".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("Mushroom".to_string()));
   }
 }

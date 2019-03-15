@@ -1,4 +1,4 @@
-use crate::modules::food::{Food, Strawberry, Banana, Pineapple, Cake};
+use crate::modules::food::{Food, Strawberry, Banana, Pineapple, Mushroom, Cake};
 use crate::modules::map::Map;
 
 use cgmath::{Vector3};
@@ -25,7 +25,6 @@ impl FoodStore {
       wave1.push((Box::new(Banana::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32));
     }
     wave1.push((Box::new(Strawberry::new(40, food_pos, path.clone(), tile_loc)) as Box<Food>, 40.0));
-    wave1.push((Box::new(Pineapple::new(41, food_pos, path.clone(), tile_loc)) as Box<Food>, 45.0));
     
     // 145 dollars
     let mut wave2 = Vec::new();
@@ -68,12 +67,33 @@ impl FoodStore {
       }
       offset += 50;
     }
-    
+    wave5.push((Box::new(Pineapple::new(offset+1, food_pos, path.clone(), tile_loc)) as Box<Food>, offset as f32*spacing+offset as f32));
+    //
     let mut wave6 = Vec::new();
     wave6.push((Box::new(Cake::new(0, food_pos, path.clone(), tile_loc)) as Box<Food>, 0 as f32));
     
+    let mut wave7 = Vec::new();
+    for i in 0..20 {
+      wave7.push((Box::new(Strawberry::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, (i as f32*0.5)));
+    }
+    for i in 20..80 {
+      wave7.push((Box::new(Pineapple::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.5));
+    }
+    
+    let mut wave8 = Vec::new();
+    wave8.push((Box::new(Cake::new(0, food_pos, path.clone(), tile_loc)) as Box<Food>, 0 as f32));
+    for i in 0..25 {
+      wave8.push((Box::new(Pineapple::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.25));
+      wave8.push((Box::new(Banana::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*0.25));
+    }
+    
+    let mut wave9 = Vec::new();
+    for i in 0..30 {
+      wave9.push((Box::new(Mushroom::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32*1.5));
+    }
+    
     FoodStore {
-      waves: vec!(wave1, wave2, wave3, wave4, wave5, wave6),
+      waves: vec!(wave1, wave2, wave3, wave4, wave5, wave6,wave7, wave8, wave9),
       current_idx: 0,
       current_wave: 0,
       wave_delta: 0.0,

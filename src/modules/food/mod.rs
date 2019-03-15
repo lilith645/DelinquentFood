@@ -2,11 +2,13 @@ pub use self::strawberry::Strawberry;
 pub use self::banana::Banana;
 pub use self::cake::Cake;
 pub use self::pineapple::Pineapple;
+pub use self::mushroom::Mushroom;
 
 mod strawberry;
 mod banana;
 mod cake;
 mod pineapple;
+mod mushroom;
 
 use maat_graphics::DrawCall;
 
@@ -75,11 +77,11 @@ impl Clone for Box<Food> {
 pub trait Food: FoodClone {
   fn data(&self) -> &FoodData;
   fn mut_data(&mut self) -> &mut FoodData;
-  fn get_children(&self) -> Vec<Box<Food>>;
+  fn get_children(&self, map: &Map) -> Vec<Box<Food>>;
   
   fn local_update(&mut self, map: &Map, delta_time: f32);
   fn update(&mut self, map: &Map, delta_time: f32) {
-    if (self.data().position.x-self.data().target.x + self.data().position.z-self.data().target.y).abs() < 0.2 {
+    if (self.data().position.x-self.data().target.x + self.data().position.z-self.data().target.y).abs() < 0.4 {
       self.mut_data().path_number += 1;
       if self.data().path_number >= self.data().path.len() as u32 {
         self.mut_data().health = 0;

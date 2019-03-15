@@ -31,7 +31,7 @@ impl Food for Cake {
     &mut self.data
   }
   
-  fn get_children(&self) -> Vec<Box<Food>> {
+  fn get_children(&self, map: &Map) -> Vec<Box<Food>> {
     Vec::new()
   }
   

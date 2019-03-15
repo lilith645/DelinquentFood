@@ -11,7 +11,7 @@ pub struct Strawberry {
 impl Strawberry {
   pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Strawberry {
     let health = 85;
-    let speed = 10.0;
+    let speed = 12.0;
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
     let size = Vector3::new(1.5, 1.5, 1.5);
@@ -31,7 +31,7 @@ impl Food for Strawberry {
     &mut self.data
   }
   
-  fn get_children(&self) -> Vec<Box<Food>> {
+  fn get_children(&self, map: &Map) -> Vec<Box<Food>> {
     Vec::new()
   }
   

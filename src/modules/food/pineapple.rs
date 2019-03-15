@@ -51,7 +51,7 @@ impl Food for Pineapple {
     &mut self.data
   }
   
-  fn get_children(&self) -> Vec<Box<Food>> {
+  fn get_children(&self, map: &Map) -> Vec<Box<Food>> {
     if !self.is_inner {
       vec!(Box::new(Pineapple::new_inner(self.data.id, self.data.position.xz(), self.data.path.clone(), self.data.path_number, self.data.path_location)))
     } else {
