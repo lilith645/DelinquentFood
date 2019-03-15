@@ -7,7 +7,12 @@ use crate::modules::hexagon::HexagonType;
 
 use maat_graphics::DrawCall;
 
-use cgmath::{Vector2, Vector3};
+use cgmath::{InnerSpace, Vector2, Vector3};
+
+const TILE_DEFAULT_HEIGHT: f32 = 0.0;
+const TILE_MAX_HEIGHT: f32 = 200.0;
+const TILE_MIN_HEIGHT: f32 = -700.0;
+const TILE_SPEED: f32 = 300.0;
 
 #[derive(Clone)]
 pub struct Map {
@@ -15,6 +20,9 @@ pub struct Map {
   layout: Layout,
   path: Vec<u32>,
   map: Vec<Hexagon>,
+  is_ready: bool,
+  resetting: bool,
+  tile_delta: f32,
 }
 
 impl Map {
@@ -90,11 +98,47 @@ impl Map {
       layout,
       path,
       map: hexagons,
+      is_ready: false,
+      resetting: false,
+      tile_delta: TILE_MAX_HEIGHT,
     }
   }
   
-  pub fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
+  pub fn update(&mut self, delta_time: f32) {
+    if !self.is_ready && !self.resetting {
+      self.tile_delta -= delta_time*TILE_SPEED;
+      if self.tile_delta <= TILE_MIN_HEIGHT {
+        self.tile_delta = TILE_DEFAULT_HEIGHT;
+        self.is_ready = true;
+      }
+    }
+    
+    if self.resetting {
+      self.tile_delta += delta_time*TILE_SPEED;
+      if self.tile_delta >= TILE_MAX_HEIGHT {
+        self.resetting = false;
+      }
+    }
+  }
+  
+  pub fn draw(&self, cam_pos: Vector2<f32>, draw_calls: &mut Vec<DrawCall>) {
+    let cam_hex = self.pixel_to_hex(cam_pos);
+    
     for hexagon in &self.map {
+      let mut y_pos = 0.0;
+      
+      if !self.is_ready || self.resetting {
+        let dist = cam_pos - self.layout.hex_to_pixel(hexagon.clone());
+        let mag = dist.magnitude();
+        y_pos = mag*3.0 + self.tile_delta;
+        
+        if y_pos < 0.0 {
+          y_pos = 0.0;
+        } else {
+          println!("{}", self.tile_delta);
+        }
+      }
+      
       let height = {
         if hexagon.is_path() {
           0.2
@@ -102,8 +146,25 @@ impl Map {
           1.0
         }
       };
-      hexagon.draw(&self, &self.layout, height, draw_calls);
+      hexagon.draw(&self, &self.layout, y_pos, height, draw_calls);
     }
+  }
+  
+  pub fn reset(&mut self) {
+    if !self.resetting {
+      self.is_ready = false;
+      self.resetting = true;
+      self.tile_delta = TILE_MIN_HEIGHT;
+      for hexagon in &mut self.map {
+        if !hexagon.is_path() {
+          hexagon.set_type(HexagonType::Open);
+        }
+      }
+    }
+  }
+  
+  pub fn is_ready(&self) -> bool {
+    self.is_ready
   }
   
   pub fn get_radius(&self) -> i32 {

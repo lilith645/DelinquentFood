@@ -8,6 +8,8 @@ use cgmath::Vector3;
 
 pub fn update_game(map: &mut Map, appliances: &mut Vec<Box<Appliance>>, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, mut selected_appliance: &mut Option<usize>, model_sizes: &mut Vec<(String, Vector3<f32>)>, delta_time: f32) {
   
+  map.update(delta_time);
+  
   for food in &mut foods.iter_mut() {
     food.update(map, delta_time);
   }

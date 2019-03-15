@@ -316,7 +316,8 @@ pub trait Appliance: ApplianceClone {
     
     for hexagon in hexagons {
       let height = 1.2;
-      hexagon.draw_hologram(map, &layout, height, draw_calls);
+      let y_pos = 0.0;
+      hexagon.draw_hologram(map, &layout, y_pos, height, draw_calls);
     }
   }
   

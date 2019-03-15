@@ -280,22 +280,22 @@ impl Hexagon {
     (((self.position.x).abs() + (self.position.y).abs() + (self.position.z).abs()) as f32 * 0.5) as i32
   }
   
-  pub fn draw_hologram(&self, map: &Map, layout: &Layout, height: f32, draw_calls: &mut Vec<DrawCall>) {
+  pub fn draw_hologram(&self, map: &Map, layout: &Layout, y_pos: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
     let position = layout.hex_to_pixel(self.clone());
     
     let radius = map.get_radius();
     
-    draw_calls.push(DrawCall::add_instanced_hologram_model(self.model.to_string(), Vector3::new(position.x, height, position.y),
+    draw_calls.push(DrawCall::add_instanced_hologram_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
                                            Vector3::new(radius as f32/4.0, height, radius as f32/4.0),
                                            Vector3::new(0.0, 90.0, 0.0)));
   }
   
-  pub fn draw(&self, map: &Map, layout: &Layout, height: f32, draw_calls: &mut Vec<DrawCall>) {
+  pub fn draw(&self, map: &Map, layout: &Layout, y_pos: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
     let position = layout.hex_to_pixel(self.clone());
     
     let radius = map.get_radius();
     
-    draw_calls.push(DrawCall::add_instanced_model(self.model.to_string(), Vector3::new(position.x, height, position.y),
+    draw_calls.push(DrawCall::add_instanced_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
                                            Vector3::new(radius as f32/3.95, height, radius as f32/3.95),
                                            Vector3::new(0.0, 90.0, 0.0)));
   }

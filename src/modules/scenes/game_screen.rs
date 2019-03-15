@@ -24,6 +24,8 @@ use cgmath::{InnerSpace, SquareMatrix, Matrix4, Point3, Deg, Vector2, Vector3, V
 const DEFAULT_ZOOM: f32 = 1.0;
 const DELTA_STEP: f32 = 0.01;
 
+const START_MONEY: i32 = 300;
+
 enum MouseState {
   World,
   Ui,
@@ -188,6 +190,7 @@ impl GameScreen {
     let m_pressed = self.data().keys.m_pressed();
     let p_pressed = self.data().keys.p_pressed();
     let x_pressed = self.data().keys.x_pressed();
+    let k_pressed = self.data().keys.k_pressed();
     
     let t_pressed = self.data().keys.t_pressed();
     
@@ -245,6 +248,21 @@ impl GameScreen {
       self.start_placing_tower(mouse, 
                                Box::new(CoffeeMachine::new(Vector2::new(0,0), Vector3::new(0.3, 0.3, 0.3), Vector3::new(0.0, 0.0, 0.0), &self.map))
                               );
+    }
+    
+    // reseting
+    if k_pressed {
+      self.map.reset();
+      self.foods.clear();
+      self.appliances.clear();
+      self.weapons.clear();
+      self.money = START_MONEY;
+      self.placing_appliance = None;
+      self.selected_appliance = None;
+      self.bin = 0;
+      self.game_speed = 1;
+      self.total_delta = 0.0;
+      self.the_food_store = FoodStore::new(&self.map);
     }
     
     if let Some(idx) = self.selected_appliance {
@@ -568,12 +586,15 @@ impl GameScreen {
   pub fn update_objects(&mut self, delta_time: f32) {
     let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
     for _ in 0..delta_steps {
-      let some_food = self.the_food_store.update(DELTA_STEP);
+      let mut some_food = None;
+      if self.map.is_ready() {
+        some_food = self.the_food_store.update(DELTA_STEP);
+      }
+      
       if let Some(food) = some_food {
         self.foods.push(food);
       }
       
-      // println!("Update is happening: {}", self.total_delta);
       let appliances = &mut self.appliances;
       let foods = &mut self.foods;
       let weapons = &mut self.weapons;
@@ -642,9 +663,6 @@ impl Scene for GameScreen {
   }
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
-   // draw_calls.push(DrawCall::set_texture_scale(DEFAULT_ZOOM));
-   // draw_calls.push(DrawCall::lerp_ortho_camera_to_pos(self.screen_offset, Vector2::new(0.05, 0.05)));
-    //draw_calls.push(DrawCall::lerp_ortho_camera_to_size(self.data.window_dim*self.zoom, Vector2::new(0.05, 0.05)));
     draw_calls.push(DrawCall::set_camera(self.camera.clone()));
     
     for food in &self.foods {
@@ -660,7 +678,9 @@ impl Scene for GameScreen {
       weapon.draw(draw_calls);
     }
     
-    self.map.draw(draw_calls);
+    let cam_pos = self.camera.get_position();
+    
+    self.map.draw(cam_pos.xz(), draw_calls);
     
     match self.mouse_state {
       MouseState::Placing => {
@@ -706,7 +726,7 @@ impl Scene for GameScreen {
       },
     }
     
-    draw_calls.push(DrawCall::draw_model(Vector3::new(self.ray_position.x, 0.0, self.ray_position.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
+    //draw_calls.push(DrawCall::draw_model(Vector3::new(self.ray_position.x, 0.0, self.ray_position.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
     
     /* 
     ** UI
@@ -754,27 +774,16 @@ impl Scene for GameScreen {
                                            "Arial".to_string()));
     
     // Game Speed
+    draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(128.0, 48.0), 
+                                           Vector2::new(160.0, 160.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key k: resets current map".to_string(), 
+                                           "Arial".to_string()));
     draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(64.0, 16.0), 
                                            Vector2::new(196.0, 196.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Speed: x".to_owned() + &(self.game_speed).to_string(), 
                                            "Arial".to_string()));
-    /*
-    draw_calls.push(
-        DrawCall::draw_coloured(Vector2::new(self.data.window_dim.x*0.5, self.data.window_dim.y*0.5),
-                                Vector2::new(self.data.window_dim.x*5.0, self.data.window_dim.y*5.0),
-                                Vector4::new(1.0, 1.0, 1.0, 1.0),
-                                90.0)
-    );
-  //   draw_calls.push(DrawCall::add_instanced_sprite_sheet(Vector2::new(self.data.window_dim.x*0.35, self.data.window_dim.y*0.6), Vector2::new(500.0, 500.0), 90.0, String::from("Logo"), Vector3::new(0,0,1)));
-   // draw_calls.push(DrawCall::draw_instanced(String::from("Logo"), "Logo".to_string()));
-    
-    draw_calls.push(
-      DrawCall::draw_textured(Vector2::new(self.data.window_dim.x*0.35, self.data.window_dim.y*0.6), 
-                              Vector2::new(500.0, 500.0),
-                              90.0,
-                              String::from("Logo"))
-    );*/
     
     draw_calls.push(DrawCall::draw_instanced_model("Hexagon".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("BlueHexagon".to_string()));
