@@ -1,4 +1,4 @@
-use crate::modules::food::{Food, Strawberry, Banana, Cake};
+use crate::modules::food::{Food, Strawberry, Banana, Pineapple, Cake};
 use crate::modules::map::Map;
 
 use cgmath::{Vector3};
@@ -25,11 +25,12 @@ impl FoodStore {
       wave1.push((Box::new(Banana::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, i as f32));
     }
     wave1.push((Box::new(Strawberry::new(40, food_pos, path.clone(), tile_loc)) as Box<Food>, 40.0));
+    wave1.push((Box::new(Pineapple::new(41, food_pos, path.clone(), tile_loc)) as Box<Food>, 45.0));
     
     // 145 dollars
     let mut wave2 = Vec::new();
     for i in 0..5 {
-      wave2.push((Box::new(Strawberry::new(121+i, food_pos, path.clone(), tile_loc)) as Box<Food>, ((i as f32*0.25))));
+      wave2.push((Box::new(Strawberry::new(i, food_pos, path.clone(), tile_loc)) as Box<Food>, ((i as f32*0.25))));
     }
     for i in 0..60 {
       wave2.push((Box::new(Banana::new(6+i, food_pos, path.clone(), tile_loc)) as Box<Food>, 1.25+i as f32*0.75));

@@ -143,7 +143,7 @@ impl GameScreen {
       
       let pix_x = crnt_pos.x;
       let pix_y = crnt_pos.z;
-      let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+      let clicked_hex = self.map.pixel_to_hex(Vector2::new(pix_x, pix_y));
       q = clicked_hex.q();
       r =  clicked_hex.r();
       self.valid_place = self.map.is_valid_qr(q,r);
@@ -383,7 +383,7 @@ impl GameScreen {
         
         let pix_x = crnt_pos.x;
         let pix_y = crnt_pos.z;
-        let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+        let clicked_hex = self.map.pixel_to_hex(Vector2::new(pix_x, pix_y));
         let q = clicked_hex.q();
         let r =  clicked_hex.r();
         
@@ -450,7 +450,7 @@ impl GameScreen {
       
       let pix_x = crnt_pos.x;
       let pix_y = crnt_pos.z;
-      let clicked_hex = self.map.pixel_to_hex(pix_x, pix_y);
+      let clicked_hex = self.map.pixel_to_hex(Vector2::new(pix_x, pix_y));
       let q = clicked_hex.q();
       let r =  clicked_hex.r();
       
@@ -793,5 +793,6 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_instanced_model("Strawberry".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("Bombard".to_string())); // Banana
     draw_calls.push(DrawCall::draw_instanced_model("Cake".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("Pineapple".to_string()));
   }
 }

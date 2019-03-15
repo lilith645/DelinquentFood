@@ -118,8 +118,8 @@ impl Map {
     self.layout.clone()
   }
   
-  pub fn pixel_to_hex(&self, pix_x: f32, pix_y: f32) -> Hexagon {
-    self.layout.pixel_to_hex(Vector2::new(pix_x, pix_y))
+  pub fn pixel_to_hex(&self, pixel: Vector2<f32>) -> Hexagon {
+    self.layout.pixel_to_hex(pixel)
   }
   
   pub fn tile_position_from_index(&self, idx: usize) -> Vector2<f32> {

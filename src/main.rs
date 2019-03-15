@@ -97,6 +97,7 @@ fn main() {
   graphics.add_model("Strawberry".to_string(), "./windys-modeling-agency/Unfinished/Strawberry.glb".to_string());
   graphics.add_model("Banana".to_string(), "./windys-modeling-agency/Unfinished/Banana.glb".to_string());
   graphics.add_model("Cake".to_string(), "./windys-modeling-agency/Unfinished/StandInModels/Cake.glb".to_string());
+  graphics.add_model("Pineapple".to_string(), "./windys-modeling-agency/Unfinished/StandInModels/Pineapple.glb".to_string());
   
   graphics.create_instance_buffer("Logo".to_string());
   
@@ -117,6 +118,7 @@ fn main() {
   graphics.create_model_instance_buffer("Strawberry".to_string());
   graphics.create_model_instance_buffer("Bombard".to_string()); // Banana 
   graphics.create_model_instance_buffer("Cake".to_string());
+  graphics.create_model_instance_buffer("Pineapple".to_string());
   
   graphics.load_shaders();
   graphics.init();

@@ -202,7 +202,7 @@ pub trait Appliance: ApplianceClone {
     }
   }
   
-  fn get_prioritised_food(&self, foods: &mut Vec<Box<Food>>) -> Option<Box<Food>> {
+  fn get_prioritised_food(&self, foods: &mut Vec<Box<Food>>, map: &Map) -> Option<Box<Food>> {
     let mut food = None;
     
     if foods.len() > 0 {
@@ -210,9 +210,10 @@ pub trait Appliance: ApplianceClone {
       let mut food_distances = Vec::new();
       
       for food in foods {
-        let location = food.get_tile_location();
+        let food_pos = food.get_location();
+        let other_hex = map.pixel_to_hex(food_pos);
         let hex = Hexagon::new(self.data().tile_location.x, self.data().tile_location.y, "".to_string());
-        let other_hex = Hexagon::new(location.x, location.y, "".to_string());
+        
         let dist = Hexagon::hex_distance(hex.clone(), other_hex.clone());
       
         if dist <= self.get_range() as i32 {

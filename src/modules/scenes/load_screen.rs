@@ -65,6 +65,7 @@ impl Scene for LoadScreen {
       draw_calls.push(DrawCall::load_texture("LifeIndicatorFull".to_string()));
       draw_calls.push(DrawCall::load_texture("LifeIndicatorEmpty".to_string()));
       
+      draw_calls.push(DrawCall::load_model("Pineapple".to_string()));
       draw_calls.push(DrawCall::load_model("Tower".to_string()));
       draw_calls.push(DrawCall::load_model("Lance".to_string()));
       draw_calls.push(DrawCall::load_model("Chair".to_string()));

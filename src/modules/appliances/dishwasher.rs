@@ -37,7 +37,7 @@ impl Appliance for Dishwasher {
     &mut self.data
   }
   
-  fn update(&mut self, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, _map: &Map, delta_time: f32) -> Vec<(Buff, Vector2<i32>, u32)> {
+  fn update(&mut self, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, map: &Map, delta_time: f32) -> Vec<(Buff, Vector2<i32>, u32)> {
     self.data.offset.y = 0.0;
     for (reference, size) in model_sizes {
       if *reference == "Hexagon".to_string() {
@@ -48,7 +48,7 @@ impl Appliance for Dishwasher {
       }
     }
     
-    let some_food = self.get_prioritised_food(foods);
+    let some_food = self.get_prioritised_food(foods, map);
     if let Some(food) = some_food {
       self.data.rotation.y = self.rotate_towards(self.data.position, &food, 90.0);
       

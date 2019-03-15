@@ -31,6 +31,10 @@ impl Food for Banana {
     &mut self.data
   }
   
+  fn get_children(&self) -> Vec<Box<Food>> {
+    Vec::new()
+  }
+  
   fn local_update(&mut self, map: &Map, delta_time: f32) {
     
   }

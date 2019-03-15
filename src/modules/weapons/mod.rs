@@ -97,7 +97,7 @@ pub trait Weapon: WeaponClone {
   }
   
   fn get_hexagon(&self, map: &Map) -> Hexagon {
-    map.pixel_to_hex(self.data().position.x, self.data().position.z)
+    map.pixel_to_hex(self.data().position.xz())
   }
   
   fn launch(&mut self, position: Vector3<f32>, tile_position: Vector2<i32>, rotation: Vector3<f32>, direction: Vector2<f32>) {

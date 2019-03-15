@@ -7,8 +7,10 @@ use cgmath::{Vector3};
 
 pub fn collisions(map: &Map, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<Weapon>>, model_sizes: &mut Vec<(String, Vector3<f32>)>, bin: &mut i32, money: &mut i32, _delta_time: f32) {
   for food in &mut foods.iter_mut() {
-    let food_tile = food.get_tile_location();
-    let hex = Hexagon::new(food_tile.x, food_tile.y, "".to_string());
+    //let food_tile = food.get_tile_location();
+    //let hex = Hexagon::new(food_tile.x, food_tile.y, "".to_string());
+    let food_pos = food.get_location();
+    let hex = map.pixel_to_hex(food_pos);
     
     for weapon in &mut weapons.iter_mut() {
       if weapon.hasnt_hit(food.get_id()) {
@@ -33,6 +35,8 @@ pub fn collisions(map: &Map, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<W
     }
   }
   
+  let mut food_children = Vec::new();
+  
   let mut offset = 0;
   for i in 0..foods.len() {
     if offset > i {
@@ -46,8 +50,12 @@ pub fn collisions(map: &Map, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<W
       } else {
         *money += foods[i-offset].sell_price();
       }
+      
+      food_children.append(&mut foods[i-offset].get_children());
       foods.remove(i-offset);
       offset += 1;
     }
   }
+  
+  foods.append(&mut food_children);
 }

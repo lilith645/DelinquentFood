@@ -45,7 +45,7 @@ impl Appliance for MeatTenderizer {
       }
     }
     
-    let some_food = self.get_prioritised_food(foods);
+    let some_food = self.get_prioritised_food(foods, map);
     if let Some(food) = some_food {
       self.data.rotation.y = self.rotate_towards(self.data.position, &food, 90.0);
       
