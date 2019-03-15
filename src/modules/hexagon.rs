@@ -300,6 +300,16 @@ impl Hexagon {
                                            Vector3::new(0.0, 90.0, 0.0)));
   }
   
+  pub fn draw_scaled(&self, map: &Map, layout: &Layout, y_pos: f32, scale: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
+    let position = layout.hex_to_pixel(self.clone());
+    
+    let radius = map.get_radius();
+    
+    draw_calls.push(DrawCall::add_instanced_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
+                                           Vector3::new(radius as f32/3.95*scale, height, radius as f32/3.95*scale),
+                                           Vector3::new(0.0, 90.0, 0.0)));
+  }
+  
   pub fn hex_distance(hexagon: Hexagon, other_hexagon: Hexagon) -> i32 {
     Hexagon::hex_sub(hexagon, other_hexagon).length()
   }

@@ -12,7 +12,7 @@ use cgmath::{InnerSpace, Vector2, Vector3};
 const TILE_DEFAULT_HEIGHT: f32 = 0.0;
 const TILE_MAX_HEIGHT: f32 = 200.0;
 const TILE_MIN_HEIGHT: f32 = -700.0;
-const TILE_SPEED: f32 = 300.0;
+const TILE_SPEED: f32 = 500.0;
 
 #[derive(Clone)]
 pub struct Map {
@@ -127,6 +127,8 @@ impl Map {
     for hexagon in &self.map {
       let mut y_pos = 0.0;
       
+      let mut scale = 1.0;
+      
       if !self.is_ready || self.resetting {
         let dist = cam_pos - self.layout.hex_to_pixel(hexagon.clone());
         let mag = dist.magnitude();
@@ -134,6 +136,11 @@ impl Map {
         
         if y_pos < 0.0 {
           y_pos = 0.0;
+        }
+        
+        scale = self.tile_delta/TILE_MIN_HEIGHT;
+        if scale > 1.0 {
+          scale = 1.0;
         }
       }
       
@@ -144,7 +151,7 @@ impl Map {
           1.0
         }
       };
-      hexagon.draw(&self, &self.layout, y_pos, height, draw_calls);
+      hexagon.draw_scaled(&self, &self.layout, y_pos, scale, height, draw_calls);
     }
   }
   
