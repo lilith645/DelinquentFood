@@ -12,6 +12,9 @@ const MENU_OPTIONS_INDEX: usize = 1;
 const MENU_OPTIONS_NAME: &str = "MenuOptions";
 const BACKGROUND_NAME: &str = "Background";
 const START_GAME_NAME: &str = "StartGame";
+const EASY_GAME_NAME: &str = "EasyGame";
+const MEDIUM_GAME_NAME: &str = "MediumGame";
+const HARD_GAME_NAME: &str = "HardGame";
 const OPTION_BUTTON_NAME: &str = "Options";
 const EXIT_BUTTON_NAME: &str = "ExitGameButton";
 
@@ -24,7 +27,7 @@ impl UserInterface {
   pub fn new(window_size: Vector2<f32>) -> UserInterface {
     let mut widgets: Vec<Widget> = Vec::new();
     
-    let menu_width = 256.0;
+    let menu_width = 512.0;
     
     let button_location = 192.0;
     
@@ -46,15 +49,33 @@ impl UserInterface {
       Widget::new(MENU_OPTIONS_NAME.to_string(), Vector2::new(window_size.x*0.5, window_size.y*0.5), 
                   Vector2::new(menu_width, 256.0),
                   background_colour)
+                .with_button(Vector2::new(menu_width*0.5-button_width*1.2, button_location),
+                             Vector2::new(button_width, button_height),
+                             Vector2::new(button_width*0.5, button_height*0.33), 
+                             Vector2::new(128.0, 128.0),
+                             EASY_GAME_NAME.to_string(), 
+                             text_colour, 
+                             Vector4::new(1.0, 0.0, 0.0, 1.0),
+                             button_colour,
+                             true, "Easy".to_string(), "Arial".to_string())
                 .with_button(Vector2::new(menu_width*0.5, button_location),
                              Vector2::new(button_width, button_height),
                              Vector2::new(button_width*0.5, button_height*0.33), 
                              Vector2::new(128.0, 128.0),
-                             START_GAME_NAME.to_string(), 
+                             MEDIUM_GAME_NAME.to_string(), 
                              text_colour, 
                              Vector4::new(1.0, 0.0, 0.0, 1.0),
                              button_colour,
-                             true, "Start Game".to_string(), "Arial".to_string())
+                             true, "Medium".to_string(), "Arial".to_string())
+                .with_button(Vector2::new(menu_width*0.5+button_width*1.2, button_location),
+                             Vector2::new(button_width, button_height),
+                             Vector2::new(button_width*0.5, button_height*0.33), 
+                             Vector2::new(128.0, 128.0),
+                             HARD_GAME_NAME.to_string(), 
+                             text_colour, 
+                             Vector4::new(1.0, 0.0, 0.0, 1.0),
+                             button_colour,
+                             true, "Hard".to_string(), "Arial".to_string())
                 .with_button(Vector2::new(menu_width*0.5, button_location-button_offset*1.0),
                              Vector2::new(button_width, button_height),
                              Vector2::new(button_width*0.5, button_height*0.33), 
@@ -97,6 +118,18 @@ impl UserInterface {
     }
     
     touched
+  }
+  
+  pub fn easy_button_pressed(&self) -> bool {
+    self.widgets[MENU_OPTIONS_INDEX].get_button_state(&EASY_GAME_NAME.to_string())
+  }
+  
+  pub fn medium_button_pressed(&self) -> bool {
+    self.widgets[MENU_OPTIONS_INDEX].get_button_state(&MEDIUM_GAME_NAME.to_string())
+  }
+  
+  pub fn hard_button_pressed(&self) -> bool {
+    self.widgets[MENU_OPTIONS_INDEX].get_button_state(&HARD_GAME_NAME.to_string())
   }
   
   pub fn start_button_pressed(&self) -> bool {

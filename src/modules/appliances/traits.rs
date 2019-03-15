@@ -128,10 +128,6 @@ pub trait Appliance: ApplianceClone {
     self.data().position
   }
   
-  fn get_tile_location(&self) -> Vector2<i32> {
-    self.data().tile_location
-  }
-  
   fn get_range(&self) -> u32 {
     self.data().range + if self.data().buffs.contains(&Buff::Range) { 1 } else { 0 }
   }

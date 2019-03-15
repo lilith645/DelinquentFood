@@ -53,7 +53,8 @@ impl Appliance for Dishwasher {
       self.data.rotation.y = self.rotate_towards(self.data.position, &food, 90.0);
       
       if self.data.charge >= self.get_fire_rate() {
-        let loc = food.get_location();
+        let loc = food.get_tile_location();
+        let loc = map.get_tile_position(loc.x, loc.y);
         let direction = Vector2::new(loc.x-self.data.position.x, loc.y-self.data.position.z).normalize();
         
         let mut weapon: Box<Weapon> = Box::new(Dish::new());

@@ -42,6 +42,9 @@ pub fn update_game(map: &mut Map, appliances: &mut Vec<Box<Appliance>>, foods: &
   
   for (buff, idx) in buffs {
     for i in 0..appliances.len() {
+      if offset > idx {
+        break;
+      }
       if idx-offset == i {
         continue;
       }

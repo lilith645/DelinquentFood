@@ -8,9 +8,16 @@ use crate::modules::system_interface::MainMenuUserInterface;
 
 use cgmath::{Vector2, Vector3};
 
+enum MapName {
+  Easy,
+  Medium,
+  Hard,
+}
+
 pub struct MenuScreen {
   data: SceneData,
   ui: MainMenuUserInterface,
+  map_name: MapName,
 }
 
 impl MenuScreen {
@@ -20,6 +27,7 @@ impl MenuScreen {
     MenuScreen {
       data: SceneData::new(window_size, model_sizes),
       ui: MainMenuUserInterface::new(window_size),
+      map_name: MapName::Medium,
     }
   }
 }
@@ -37,7 +45,21 @@ impl Scene for MenuScreen {
     if self.data().window_resized {
       Box::new(MenuScreen::new(window_size, self.data.model_sizes.clone()))
     } else {
-      Box::new(GameScreen::new(window_size, self.data.model_sizes.clone()))
+      let map_name = {
+        match self.map_name {
+          MapName::Easy => {
+            "EasyMap.ini".to_string()
+          },
+          MapName::Medium => {
+            "MediumMap.ini".to_string()
+          },
+          MapName::Hard => {
+            "HardMap.ini".to_string()
+          },
+        }
+      };
+      
+      Box::new(GameScreen::new(window_size, self.data.model_sizes.clone(), map_name))
     }
   }
   
@@ -51,6 +73,21 @@ impl Scene for MenuScreen {
     self.ui.update(delta_time, mouse, left_clicked, &keys_pressed_this_frame, scroll_delta);
     
     if self.ui.start_button_pressed() || self.data().window_resized {
+      self.mut_data().next_scene = true;
+    }
+    
+    if self.ui.easy_button_pressed() {
+      self.map_name = MapName::Easy;
+      self.mut_data().next_scene = true;
+    }
+    
+    if self.ui.medium_button_pressed() {
+      self.map_name = MapName::Medium;
+      self.mut_data().next_scene = true;
+    }
+    
+    if self.ui.hard_button_pressed() {
+      self.map_name = MapName::Hard;
       self.mut_data().next_scene = true;
     }
     

@@ -57,7 +57,7 @@ pub struct GameScreen {
 }
 
 impl GameScreen {
-  pub fn new(window_size: Vector2<f32>, model_sizes: Vec<(String, Vector3<f32>)>) -> GameScreen {
+  pub fn new(window_size: Vector2<f32>, model_sizes: Vec<(String, Vector3<f32>)>, map_name: String) -> GameScreen {
     println!("Game Screen");
     
     let mut camera = camera::Camera::default_vk();
@@ -66,7 +66,7 @@ impl GameScreen {
     camera.set_yaw(210.10083);
     camera.set_move_speed(50.0);
     
-    let map = Map::new();
+    let map = Map::new(map_name.to_string());
     
     let path = map.get_path();
     let food_pos = map.tile_position_from_index(path[0] as usize);
@@ -275,7 +275,7 @@ impl GameScreen {
       // Sell tower
       if x_pressed {
         self.money += self.appliances[idx].sell_price();
-        let hex_location = self.appliances[idx].get_tile_location();
+        let hex_location = self.appliances[idx].get_qr_location();
         self.map.set_hexagon_type(hex_location.x, hex_location.y, HexagonType::Open);
         self.appliances.remove(idx);
         self.selected_appliance = None;

@@ -18,14 +18,14 @@ pub struct Map {
 }
 
 impl Map {
-  pub fn new() -> Map {
+  pub fn new(map_name: String) -> Map {
     let mut hexagons: Vec<Hexagon> = Vec::new();
     
     let mut radius: i32 = 0;
     let mut offset = 1;
     let mut y = 0;
     
-    if let Ok(f) = File::open("./resources/Maps/MediumMap.ini") {
+    if let Ok(f) = File::open("./resources/Maps/".to_owned() + &(map_name)) {
       println!("Settings file exists");
       let f = BufReader::new(f);
       
