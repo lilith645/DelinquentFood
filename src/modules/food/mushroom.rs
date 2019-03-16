@@ -13,6 +13,7 @@ const START_HEALTH: i32 = 10;
 pub struct Mushroom {
   data: FoodData,
   grow_speed: f32,
+  last_size_stage: f32,
 }
 
 impl Mushroom {
@@ -26,6 +27,7 @@ impl Mushroom {
     Mushroom {
       data: FoodData::new(id, position, rotation, size, speed, health, "Mushroom".to_string(), path.clone(), location, sell_price),
       grow_speed: GROW_SPEED,
+      last_size_stage: 0.5,
     }
   }
   
@@ -43,6 +45,7 @@ impl Mushroom {
     Mushroom {
       data,
       grow_speed: GROW_SPEED,
+      last_size_stage: 0.5,
     }
   }
 }
@@ -97,13 +100,39 @@ impl Food for Mushroom {
       let old_size = self.mut_data().size;
       let old_max_health = 1.0 + 10.0*(old_size.x as f32/0.25).ceil();
       self.mut_data().size += self.data().size*self.grow_speed*delta_time;
-      
+      if self.mut_data().size.x > 2.5 {
+        self.mut_data().sell_price = 10;
+        self.mut_data().speed = START_SPEED*0.8*0.8*0.8*0.8;
+        if self.last_size_stage < 2.5 {
+          self.mut_data().health = self.mut_data().health*2;
+        }
+      } else if self.mut_data().size.x > 2.0 {
+        self.mut_data().sell_price = 8;
+        self.mut_data().speed = START_SPEED*0.8*0.8*0.8;
+        if self.last_size_stage < 2.0 {
+          self.mut_data().health = self.mut_data().health*2;
+        }
+      } else if self.mut_data().size.x > 1.5 {
+        self.mut_data().sell_price = 6;
+        self.mut_data().speed = START_SPEED*0.8*0.8;
+        if self.last_size_stage < 1.5 {
+          self.mut_data().health = self.mut_data().health*2;
+        }
+      } else if self.mut_data().size.x > 1.0 {
+        self.mut_data().sell_price = 4;
+        self.mut_data().speed = START_SPEED*0.8;
+        if self.last_size_stage < 1.0 {
+          self.mut_data().health = self.mut_data().health*2;
+        }
+      }
+      /*
       self.mut_data().health = ((old_health/old_max_health)*(1.0 + 10.0*(self.mut_data().size.x as f32/0.25).ceil()) as f32).ceil() as i32;
       self.mut_data().sell_price = 1 + 5*(self.mut_data().size.x/0.5).floor() as i32;
-      self.mut_data().speed *= 1.0-((self.grow_speed)*delta_time);
+      self.mut_data().speed *= 1.0-((self.grow_speed)*delta_time);*/
    } else {
      self.mut_data().size = Vector3::new(MAX_SIZE, MAX_SIZE, MAX_SIZE);
    }
     
+    self.last_size_stage = self.data().size.x;
   }
 }

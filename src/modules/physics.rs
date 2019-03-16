@@ -44,14 +44,18 @@ pub fn collisions(map: &Map, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<W
     }
     
     if foods[i-offset].is_cooked() || foods[i-offset].is_rotten() {
+      let mut rotted = false;
       if foods[i-offset].is_rotten() {
         // Do something
         *bin += 10;
+        rotted = true;
       } else {
         *money += foods[i-offset].sell_price();
       }
       
-      food_children.append(&mut foods[i-offset].get_children(map));
+      if !rotted {
+        food_children.append(&mut foods[i-offset].get_children(map));
+      }
       foods.remove(i-offset);
       offset += 1;
     }
