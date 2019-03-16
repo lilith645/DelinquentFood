@@ -5,26 +5,26 @@ use crate::modules::food::Food;
 use cgmath::Vector3;
 
 #[derive(Clone)]
-pub struct Dish {
+pub struct Salt {
   data: WeaponData,
 }
 
-impl Dish {
-  pub fn new() -> Dish {
-    let velocity = 80.0;
+impl Salt {
+  pub fn new() -> Salt {
+    let velocity = 160.0;
     let rotation_velocity = Vector3::new(360.0, 360.0, 360.0);
-    let damage = 8;
-    let pierce = 4;
+    let damage = 1;
+    let pierce = 1;
     let timer = 0.0;
-    let scale = Vector3::new(1.0, 1.0, 1.0);
+    let scale = Vector3::new(0.4, 0.4, 0.4);
     let debuff = Vec::new();
-    Dish {
-      data: WeaponData::new(velocity, rotation_velocity, damage, pierce, timer, scale, WeaponType::Projectile, debuff, "Plate".to_string()),
+    Salt {
+      data: WeaponData::new(velocity, rotation_velocity, damage, pierce, timer, scale, WeaponType::Projectile, debuff, "Salt".to_string()),
     }
   }
 }
 
-impl Weapon for Dish {
+impl Weapon for Salt {
   fn data(&self) -> &WeaponData {
     &self.data
   }

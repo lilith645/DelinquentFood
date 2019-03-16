@@ -1,10 +1,12 @@
 pub use self::dish::Dish;
 pub use self::coldsnap::ColdSnap;
 pub use self::tenderizer::Tenderizer;
+pub use self::salt::Salt;
 
 mod dish;
 mod coldsnap;
 mod tenderizer;
+mod salt;
 
 use maat_graphics::DrawCall;
 

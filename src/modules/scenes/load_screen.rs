@@ -86,6 +86,8 @@ impl Scene for LoadScreen {
       draw_calls.push(DrawCall::load_model("Cake".to_string()));
       draw_calls.push(DrawCall::load_model("CoffeeMachine".to_string()));
       draw_calls.push(DrawCall::load_model("Mushroom".to_string()));
+      draw_calls.push(DrawCall::load_model("SaltGrinder".to_string()));
+      draw_calls.push(DrawCall::load_model("Salt".to_string()));
     }
     
     draw_calls.push(DrawCall::set_texture_scale(1.0));

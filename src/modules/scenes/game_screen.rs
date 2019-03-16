@@ -6,7 +6,7 @@ use crate::modules::scenes::SceneData;
 use crate::modules::scenes::MenuScreen;
 
 use crate::modules::food::Food;
-use crate::modules::appliances::{Dishwasher, Fridge, MeatTenderizer, CoffeeMachine};
+use crate::modules::appliances::{Dishwasher, Fridge, MeatTenderizer, CoffeeMachine, SaltGrinder};
 use crate::modules::appliances::traits::{Appliance, TargetPriority};
 use crate::modules::weapons::{Weapon};
 use crate::modules::hexagon::{Layout, Hexagon, HexagonType};
@@ -180,6 +180,7 @@ impl GameScreen {
     let two_pressed = self.data.keys.two_pressed();
     let three_pressed = self.data.keys.three_pressed();
     let four_pressed = self.data.keys.four_pressed();
+    let five_pressed = self.data.keys.five_pressed();
     let mut w_pressed = self.data.keys.w_pressed();
     let mut a_pressed = self.data.keys.a_pressed();
     let mut s_pressed = self.data.keys.s_pressed();
@@ -247,6 +248,11 @@ impl GameScreen {
     if four_pressed {
       self.start_placing_tower(mouse, 
                                Box::new(CoffeeMachine::new(Vector2::new(0,0), Vector3::new(0.3, 0.3, 0.3), Vector3::new(0.0, 0.0, 0.0), &self.map))
+                              );
+    }
+    if five_pressed {
+      self.start_placing_tower(mouse, 
+                               Box::new(SaltGrinder::new(Vector2::new(0,0), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, -90.0), &self.map))
                               );
     }
     
@@ -572,9 +578,9 @@ impl GameScreen {
     self.space_pressed_last_frame = space_pressed;
     
     if scroll_delta > 0.0 {
-      self.camera.process_movement(camera::Direction::Forward, DELTA_STEP);
+      self.camera.process_movement(camera::Direction::Forward, 10.0*delta_time);
     } else if scroll_delta < 0.0 {
-      self.camera.process_movement(camera::Direction::Backward, DELTA_STEP);
+      self.camera.process_movement(camera::Direction::Backward, 10.0*delta_time);
     }
     
     let window_dimensions = self.data().window_dim;
@@ -707,17 +713,17 @@ impl Scene for GameScreen {
                                            "Key t: Cycle targeting priority".to_string(), 
                                            "Arial".to_string()));
           
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-160.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key X: Sell appliance $".to_owned() + &(sell_price).to_string(), 
                                            "Arial".to_string()));
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-160.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-196.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key C: Cleans appliance $".to_owned() + &(clean_price).to_string(), 
                                            "Arial".to_string()));
-          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-192.0), 
+          draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-228.0), 
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key M: Moves selected appliance".to_string(), 
@@ -751,6 +757,7 @@ impl Scene for GameScreen {
     let t_fridge = Fridge::new(Vector2::new(0,0), Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0), &self.map);
     let t_tenderiser = MeatTenderizer::new(Vector2::new(0,0), Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0), &self.map);
     let t_coffee = CoffeeMachine::new(Vector2::new(0,0), Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0), &self.map);
+    let t_salt_grinder = SaltGrinder::new(Vector2::new(0,0), Vector3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 0.0), &self.map);
     
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5), 
                                            Vector2::new(128.0, 128.0), 
@@ -771,6 +778,11 @@ impl Scene for GameScreen {
                                            Vector2::new(128.0, 128.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key 4: Buy Coffee Machine $".to_owned() + &(t_coffee.buy_cost()).to_string(),
+                                           "Arial".to_string()));
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-128.0), 
+                                           Vector2::new(128.0, 128.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key 5: Buy Salt Grinder $".to_owned() + &(t_salt_grinder.buy_cost()).to_string(),
                                            "Arial".to_string()));
     
     // Game Speed
@@ -795,12 +807,14 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_instanced_model("Dishwasher".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("MeatTenderizer".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("CoffeeMachine".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("SaltGrinder".to_string()));
     
     draw_calls.push(DrawCall::draw_instanced_model("Spoon".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("Plate".to_string()));
+    draw_calls.push(DrawCall::draw_instanced_model("Salt".to_string()));
     
     draw_calls.push(DrawCall::draw_instanced_model("Strawberry".to_string()));
-    draw_calls.push(DrawCall::draw_instanced_model("Bombard".to_string())); // Banana
+    draw_calls.push(DrawCall::draw_instanced_model("Banana".to_string())); // Banana
     draw_calls.push(DrawCall::draw_instanced_model("Cake".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("Pineapple".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("Mushroom".to_string()));

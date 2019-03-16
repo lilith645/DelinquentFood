@@ -67,7 +67,7 @@ impl FoodStore {
       }
       offset += 50;
     }
-    wave5.push((Box::new(Pineapple::new(offset+1, food_pos, path.clone(), tile_loc)) as Box<Food>, offset as f32*spacing+offset as f32));
+    wave5.push((Box::new(Pineapple::new(offset+1, food_pos, path.clone(), tile_loc)) as Box<Food>, offset as f32));
     //
     let mut wave6 = Vec::new();
     wave6.push((Box::new(Cake::new(0, food_pos, path.clone(), tile_loc)) as Box<Food>, 0 as f32));

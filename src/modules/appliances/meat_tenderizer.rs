@@ -18,7 +18,7 @@ impl MeatTenderizer {
     let position = map.get_tile_position(tile.x as i32, tile.y as i32);
     let life_expectancy = 4;
     let range = 1;
-    let cost = 75;
+    let cost = 95;
     let fire_rate = 2.2;
     let directional_range = true;
     
