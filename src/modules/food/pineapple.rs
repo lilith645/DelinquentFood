@@ -59,7 +59,7 @@ impl Food for Pineapple {
     }
   }
   
-  fn local_update(&mut self, map: &Map, delta_time: f32) {
+  fn local_update(&mut self, map: &Map, move_angle: f32, delta_time: f32) {
     
   }
 }

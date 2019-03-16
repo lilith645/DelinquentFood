@@ -35,7 +35,7 @@ impl Food for Banana {
     Vec::new()
   }
   
-  fn local_update(&mut self, map: &Map, delta_time: f32) {
+  fn local_update(&mut self, map: &Map, move_angle: f32, delta_time: f32) {
     self.data.rotation.y += 90.0*delta_time;//angle.0 as f32+90.0;
   }
 }

@@ -541,7 +541,7 @@ impl GameScreen {
     }
   }
   
-  pub fn update_neutral(&mut self, delta_time: f32) {
+  pub fn update_neutral(&mut self, real_delta: f32, delta_time: f32) {
     let space_pressed = self.data().keys.space_pressed();
     let scroll_delta = self.data().scroll_delta;
     
@@ -578,9 +578,9 @@ impl GameScreen {
     self.space_pressed_last_frame = space_pressed;
     
     if scroll_delta > 0.0 {
-      self.camera.process_movement(camera::Direction::Forward, 10.0*delta_time);
+      self.camera.process_movement(camera::Direction::Forward, 10.0*real_delta);
     } else if scroll_delta < 0.0 {
-      self.camera.process_movement(camera::Direction::Backward, 10.0*delta_time);
+      self.camera.process_movement(camera::Direction::Backward, 10.0*real_delta);
     }
     
     let window_dimensions = self.data().window_dim;
@@ -589,8 +589,12 @@ impl GameScreen {
     self.screen_offset.y=(window_dimensions.y*self.zoom)*0.5;
   }
   
-  pub fn update_objects(&mut self, delta_time: f32) {
+  pub fn update_objects(&mut self, real_delta: f32, delta_time: f32) {
     let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
+    
+    self.map.update(real_delta);
+    
+    
     for _ in 0..delta_steps {
       let mut some_food = None;
       if self.map.is_ready() {
@@ -663,9 +667,9 @@ impl Scene for GameScreen {
     
     self.update_keypresses(real_delta);
     
-    self.update_objects(delta_time);
+    self.update_objects(real_delta, delta_time);
     
-    self.update_neutral(delta_time);
+    self.update_neutral(real_delta, delta_time);
   }
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {

@@ -3,12 +3,14 @@ pub use self::banana::Banana;
 pub use self::cake::Cake;
 pub use self::pineapple::Pineapple;
 pub use self::mushroom::Mushroom;
+pub use self::jelly::Jelly;
 
 mod strawberry;
 mod banana;
 mod cake;
 mod pineapple;
 mod mushroom;
+mod jelly;
 
 use maat_graphics::DrawCall;
 
@@ -79,7 +81,7 @@ pub trait Food: FoodClone {
   fn mut_data(&mut self) -> &mut FoodData;
   fn get_children(&self, map: &Map) -> Vec<Box<Food>>;
   
-  fn local_update(&mut self, map: &Map, delta_time: f32);
+  fn local_update(&mut self, map: &Map, move_angle: f32, delta_time: f32);
   fn update(&mut self, map: &Map, delta_time: f32) {
     if (self.data().position.x-self.data().target.x + self.data().position.z-self.data().target.y).abs() < 0.4 {
       self.mut_data().path_number += 1;
@@ -131,7 +133,7 @@ pub trait Food: FoodClone {
     self.mut_data().position.x += direction.x*speed*delta_time;
     self.mut_data().position.z += direction.y*speed*delta_time;
     
-    self.local_update(map, delta_time);
+    self.local_update(map, angle.0, delta_time);
   }
   
   fn get_health(&self) -> i32 {

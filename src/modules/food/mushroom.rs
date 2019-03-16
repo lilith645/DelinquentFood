@@ -94,7 +94,7 @@ impl Food for Mushroom {
     shroom_childs
   }
   
-  fn local_update(&mut self, map: &Map, delta_time: f32) {
+  fn local_update(&mut self, map: &Map, move_angle: f32, delta_time: f32) {
     if self.data().size.x < MAX_SIZE {
       let old_health = self.data().health as f32;
       let old_size = self.mut_data().size;
