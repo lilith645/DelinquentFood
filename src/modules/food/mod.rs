@@ -33,6 +33,7 @@ pub struct FoodData {
   target: Vector2<f32>,
   path: Vec<u32>,
   health: i32,
+  max_health: i32,
   total_dt: f32,
   cooked: bool,
   rotten: bool,
@@ -54,6 +55,7 @@ impl FoodData {
       target: position.xz(),
       path,
       health,
+      max_health: health,
       total_dt: 0.0,
       cooked: false,
       rotten: false,
@@ -86,6 +88,10 @@ pub trait Food: FoodClone {
   
   fn local_update(&mut self, map: &Map, move_angle: f32, delta_time: f32);
   fn update(&mut self, map: &Map, delta_time: f32) {
+    if self.data().health > self.data().max_health {
+      self.mut_data().max_health = self.data().health;
+    }
+    
     if (self.data().position.x-self.data().target.x + self.data().position.z-self.data().target.y).abs() < 0.4 {
       self.mut_data().path_number += 1;
       if self.data().path_number >= self.data().path.len() as u32 {
@@ -189,7 +195,8 @@ pub trait Food: FoodClone {
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
     //draw_calls.push(DrawCall::draw_model(self.data().position, self.data().size, self.data().rotation, self.data().model.to_string()));
-    draw_calls.push(DrawCall::add_instanced_model(self.data().model.to_string(), self.data().position, self.data().size, self.data().rotation));
+    //draw_calls.push(DrawCall::add_instanced_model(self.data().model.to_string(), self.data().position, self.data().size, self.data().rotation));
+    draw_calls.push(DrawCall::add_instanced_model_overwrite_colour(self.data().model.to_string(), self.data().position, self.data().size, self.data().rotation, Vector3::new(1.0 - (self.data().health as f32/self.data().max_health as f32), self.data().health as f32/self.data().max_health as f32, 0.0)));
   }
 }
 

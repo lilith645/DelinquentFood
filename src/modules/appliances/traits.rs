@@ -296,7 +296,7 @@ pub trait Appliance: ApplianceClone {
     self.mut_data().draw_range = should_draw;
   }
   
-  fn draw_range(&self, map: &Map, draw_calls: &mut Vec<DrawCall>) {
+  fn draw_range_coloured(&self, map: &Map, colour: Vector3<f32>, draw_calls: &mut Vec<DrawCall>) {
     let mut layout = map.get_layout();
     let new_origin = Vector2::new(self.data().position.x, self.data().position.z);
     layout.set_origin(new_origin);
@@ -317,25 +317,60 @@ pub trait Appliance: ApplianceClone {
     for hexagon in hexagons {
       let height = 1.2;
       let y_pos = 0.0;
-      hexagon.draw_hologram(map, &layout, y_pos, height, draw_calls);
+      hexagon.draw_hologram_coloured(map, &layout, y_pos, height, colour, draw_calls);
+    }
+  }
+  
+  fn draw_range(&self, map: &Map, valid: bool, draw_calls: &mut Vec<DrawCall>) {
+    let mut layout = map.get_layout();
+    let new_origin = Vector2::new(self.data().position.x, self.data().position.z);
+    layout.set_origin(new_origin);
+    
+    // draw hexagons
+    let mut hexagons: Vec<Hexagon> = Vec::new();
+    
+   
+    let radius = self.get_range() as i32;
+    let hexagons = {
+      if self.data().directional_range {
+        Hexagon::generate_directional_hexagon_range(radius, "PurpleHexagon".to_string())
+      } else {
+        Hexagon::generate_hexagon_range(radius, "PurpleHexagon".to_string())
+      }
+    };
+    
+    for hexagon in hexagons {
+      let height = 1.2;
+      let y_pos = 0.0;
+       if valid {
+         hexagon.draw_hologram_coloured(map, &layout, y_pos, height, Vector3::new(0.0, 1.0, 0.0), draw_calls);
+       } else {
+         hexagon.draw_hologram_coloured(map, &layout, y_pos, height, Vector3::new(1.0, 0.0, 0.0), draw_calls);
+       }
+    }
+  }
+  
+  fn draw_hologram_invalid(&self, map: &Map, draw_calls: &mut Vec<DrawCall>) {
+    draw_calls.push(DrawCall::add_instanced_hologram_model_overwrite_colour(self.data().model.to_string(), self.data().position+self.data().offset, self.data().size, self.data().rotation, Vector3::new(1.0, 0.0, 0.0)));
+    
+    if self.data().draw_range {
+      self.draw_range(map, false, draw_calls);
     }
   }
   
   fn draw_hologram(&self, map: &Map, draw_calls: &mut Vec<DrawCall>) {
-    //draw_calls.push(DrawCall::draw_hologram_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
-    draw_calls.push(DrawCall::add_instanced_hologram_model(self.data().model.to_string(), self.data().position+self.data().offset, self.data().size, self.data().rotation));
+    draw_calls.push(DrawCall::add_instanced_hologram_model_overwrite_colour(self.data().model.to_string(), self.data().position+self.data().offset, self.data().size, self.data().rotation, Vector3::new(0.0, 1.0, 0.0)));
     
     if self.data().draw_range {
-      self.draw_range(map, draw_calls);
+      self.draw_range(map, true, draw_calls);
     }
   }
   
-  fn draw(&self, map: &Map, camera: &camera::Camera, window_dim: Vector2<f32>, draw_calls: &mut Vec<DrawCall>) { 
-    //draw_calls.push(DrawCall::draw_model(self.data().position+self.data().offset, self.data().size, self.data().rotation, self.data().model.to_string()));
+  fn draw(&self, map: &Map, camera: &camera::Camera, window_dim: Vector2<f32>, draw_calls: &mut Vec<DrawCall>) {
     draw_calls.push(DrawCall::add_instanced_model(self.data().model.to_string(), self.data().position+self.data().offset, self.data().size, self.data().rotation));
     
     if self.data().draw_range {
-      self.draw_range(map, draw_calls);
+      self.draw_range(map, true, draw_calls);
     }
     
     let cam_pos = camera.get_position();

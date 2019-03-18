@@ -229,9 +229,9 @@ impl Map {
   pub fn is_valid_qr(&self, q: i32, r: i32) -> bool {
     let mut is_valid = false;
     if let Some(hex) = self.get_hex_from_qr(q,r) {
-      if !hex.is_path() {
+      //if !hex.is_path() {
         is_valid = true;
-      }
+     // }
     }
     
     is_valid

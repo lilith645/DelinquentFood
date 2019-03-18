@@ -265,7 +265,7 @@ impl GameScreen {
                               );
     }
     
-    if b_pressed {
+    if b_pressed && self.bin > 0 {
       if self.money >= BIN_CLEAN_COST {
         self.money -= BIN_CLEAN_COST;
         self.bin = 0;
@@ -719,15 +719,22 @@ impl Scene for GameScreen {
         if let Some(appliance) = &self.placing_appliance {
           if self.valid_place {
             let map = &self.map;
-            appliance.draw_hologram(map, draw_calls);
+            let some_hex = self.map.get_hex_from_qr(appliance.get_qr_location().x, appliance.get_qr_location().y);
+            if let Some(hex) = some_hex {
+              if hex.is_path() {
+                appliance.draw_hologram_invalid(map, draw_calls);
+              } else {
+                appliance.draw_hologram(map, draw_calls);
+              }
+            }
           }
         }
       },
       _ => {
         if let Some(idx) = self.selected_appliance {
           let map = &self.map;
-          //here is our error
-          self.appliances[idx].draw_range(map, draw_calls);
+          
+          self.appliances[idx].draw_range_coloured(map, Vector3::new(0.0, 0.0, 1.0), draw_calls);
           
           let clean_price = self.appliances[idx].clean_cost();
           let sell_price = self.appliances[idx].sell_price();
