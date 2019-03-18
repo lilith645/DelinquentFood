@@ -3,6 +3,8 @@ use crate::modules::map::Map;
 
 use cgmath::{Vector2, Vector3};
 
+const MAX_HEALTH: i32 = 400;
+
 #[derive(Clone)]
 pub struct Cake {
   data: FoodData,
@@ -10,7 +12,7 @@ pub struct Cake {
 
 impl Cake {
   pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Cake {
-    let health = 400;
+    let health = MAX_HEALTH;
     let speed = 10.0;
     let position = Vector3::new(position.x, 50.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
@@ -29,6 +31,10 @@ impl Food for Cake {
   
   fn mut_data(&mut self) -> &mut FoodData {
     &mut self.data
+  }
+  
+  fn get_bin_space(&self) -> i32 {
+    (50.0 * (self.data().health as f32 / MAX_HEALTH as f32)).ceil() as i32
   }
   
   fn get_children(&self, map: &Map) -> Vec<Box<Food>> {

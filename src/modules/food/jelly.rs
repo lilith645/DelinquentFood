@@ -7,6 +7,8 @@ use crate::modules::map::Map;
 
 use cgmath::{InnerSpace, Vector2, Vector3};
 
+const MAX_HEALTH: i32 = 250;
+
 #[derive(Clone)]
 pub struct Jelly {
   data: FoodData,
@@ -14,7 +16,7 @@ pub struct Jelly {
 
 impl Jelly {
   pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Jelly {
-    let health = 250;
+    let health = MAX_HEALTH;
     let speed = 12.0;
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, -30.0, 0.0);
@@ -38,6 +40,10 @@ impl Food for Jelly {
   
   fn mut_data(&mut self) -> &mut FoodData {
     &mut self.data
+  }
+  
+  fn get_bin_space(&self) -> i32 {
+    (30.0 * (self.data().health as f32 / MAX_HEALTH as f32)).ceil() as i32
   }
   
   fn get_children(&self, map: &Map) -> Vec<Box<Food>> {

@@ -35,6 +35,7 @@ pub struct FoodData {
   health: i32,
   total_dt: f32,
   cooked: bool,
+  rotten: bool,
   sell_price: i32,
 }
 
@@ -55,6 +56,7 @@ impl FoodData {
       health,
       total_dt: 0.0,
       cooked: false,
+      rotten: false,
       sell_price,
     }
   }
@@ -79,6 +81,7 @@ impl Clone for Box<Food> {
 pub trait Food: FoodClone {
   fn data(&self) -> &FoodData;
   fn mut_data(&mut self) -> &mut FoodData;
+  fn get_bin_space(&self) -> i32;
   fn get_children(&self, map: &Map) -> Vec<Box<Food>>;
   
   fn local_update(&mut self, map: &Map, move_angle: f32, delta_time: f32);
@@ -86,7 +89,7 @@ pub trait Food: FoodClone {
     if (self.data().position.x-self.data().target.x + self.data().position.z-self.data().target.y).abs() < 0.4 {
       self.mut_data().path_number += 1;
       if self.data().path_number >= self.data().path.len() as u32 {
-        self.mut_data().health = 0;
+        self.mut_data().rotten = true;
         self.mut_data().cooked = false;
         return;
       }
@@ -153,7 +156,7 @@ pub trait Food: FoodClone {
   }
   
   fn is_rotten(&self) -> bool {
-    self.data().health <= 0 && !self.is_cooked()
+    self.data().rotten && !self.is_cooked()
   }
   
   fn apply_damage(&mut self, dmg: i32) {

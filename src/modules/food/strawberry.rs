@@ -3,6 +3,8 @@ use crate::modules::map::Map;
 
 use cgmath::{Vector2, Vector3};
 
+const MAX_HEALTH: i32 = 85;
+
 #[derive(Clone)]
 pub struct Strawberry {
   data: FoodData,
@@ -10,7 +12,7 @@ pub struct Strawberry {
 
 impl Strawberry {
   pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Strawberry {
-    let health = 85;
+    let health = MAX_HEALTH;
     let speed = 12.0;
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
@@ -29,6 +31,10 @@ impl Food for Strawberry {
   
   fn mut_data(&mut self) -> &mut FoodData {
     &mut self.data
+  }
+  
+  fn get_bin_space(&self) -> i32 {
+    (12.0 * (self.data().health as f32 / MAX_HEALTH as f32)).ceil() as i32
   }
   
   fn get_children(&self, map: &Map) -> Vec<Box<Food>> {

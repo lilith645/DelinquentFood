@@ -47,7 +47,7 @@ pub fn collisions(map: &Map, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<W
       let mut rotted = false;
       if foods[i-offset].is_rotten() {
         // Do something
-        *bin += 10;
+        *bin += foods[i-offset].get_bin_space();
         rotted = true;
       } else {
         *money += foods[i-offset].sell_price();

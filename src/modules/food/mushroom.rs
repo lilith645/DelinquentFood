@@ -59,6 +59,10 @@ impl Food for Mushroom {
     &mut self.data
   }
   
+  fn get_bin_space(&self) -> i32 {
+    (15.0 * self.data().size.x).ceil() as i32
+  }
+  
   fn get_children(&self, map: &Map) -> Vec<Box<Food>> {
     let mut shroom_childs: Vec<Box<Food>> = Vec::new();
     

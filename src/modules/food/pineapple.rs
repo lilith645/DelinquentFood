@@ -3,6 +3,8 @@ use crate::modules::map::Map;
 
 use cgmath::{Vector2, Vector3};
 
+const MAX_HEALTH: i32 = 60;
+
 #[derive(Clone)]
 pub struct Pineapple {
   data: FoodData,
@@ -11,7 +13,7 @@ pub struct Pineapple {
 
 impl Pineapple {
   pub fn new(id: i32, position: Vector2<f32>, path: Vec<u32>, location: Vector2<i32>) -> Pineapple {
-    let health = 60;
+    let health = MAX_HEALTH;
     let speed = 12.5;
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
@@ -25,7 +27,7 @@ impl Pineapple {
   }
   
   pub fn new_inner(id: i32, position: Vector2<f32>, path: Vec<u32>, path_number: u32, location: Vector2<i32>) -> Pineapple {
-    let health = 30;
+    let health = MAX_HEALTH/2;
     let speed = 18.0;
     let position = Vector3::new(position.x, 0.0, position.y);
     let rotation = Vector3::new(0.0, 0.0, 0.0);
@@ -49,6 +51,10 @@ impl Food for Pineapple {
   
   fn mut_data(&mut self) -> &mut FoodData {
     &mut self.data
+  }
+  
+  fn get_bin_space(&self) -> i32 {
+    (30.0*self.data().size.x * (self.data().health as f32 / MAX_HEALTH as f32)).ceil() as i32
   }
   
   fn get_children(&self, map: &Map) -> Vec<Box<Food>> {
