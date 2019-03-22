@@ -40,11 +40,13 @@ fn benchmark(draw_calls: &mut Vec<DrawCall>, dimensions: [f32; 2]) {
                                            "Arial".to_string()));*/
 }
 
-fn fps_overlay(draw_calls: &mut Vec<DrawCall>, dimensions: [f32; 2], fps: f64, ms: f64) {
+fn fps_overlay(draw_calls: &mut Vec<DrawCall>, dimensions: [f32; 2], fps: f64, ms: f64, update_time: f64) {
   let  mut fps = fps.to_string();
   fps.truncate(6);
   let mut ms = ms.to_string();
   ms.truncate(4);
+  let mut update_time = update_time.to_string();
+  update_time.truncate(8);
   
   draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, dimensions[1]-32.0), 
                                            Vector2::new(96.0, 96.0), 
@@ -54,7 +56,12 @@ fn fps_overlay(draw_calls: &mut Vec<DrawCall>, dimensions: [f32; 2], fps: f64, m
   draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, dimensions[1]-64.0), 
                                            Vector2::new(96.0, 96.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "".to_string() + &ms + &" ms/frame".to_string(), 
+                                           "Total: ".to_string() + &ms + &" ms/frame".to_string(), 
+                                           "Arial".to_string()));
+  draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, dimensions[1]-128.0), 
+                                           Vector2::new(96.0, 96.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Update: ".to_string() + &update_time + &" ms/frame".to_string(), 
                                            "Arial".to_string()));
 }
 
@@ -139,6 +146,7 @@ fn main() {
   
   let mut delta_time;
   let mut last_time = time::Instant::now();
+  let mut update_time = time::Instant::now();
   
   let mut done = false;
   let mut dimensions;
@@ -176,16 +184,20 @@ fn main() {
     
 
     game.draw(&mut draw_calls);
+    
     game.update(delta_time as f32);
+    let update_ms = update_time.elapsed().subsec_nanos() as f64 / 1000000000.0 as f64;
     
     benchmark(&mut draw_calls, dimensions);
-    fps_overlay(&mut draw_calls, dimensions, last_fps, ms);
+    fps_overlay(&mut draw_calls, dimensions, last_fps, ms, update_ms);
     
     let model_details = graphics.pre_draw();
     graphics.draw(&draw_calls, delta_time as f32);
     graphics.post_draw();
     
     draw_calls.clear();
+    
+    update_time = time::Instant::now();
     
     game.reset_scroll_value();
     for (reference, size) in &model_details {

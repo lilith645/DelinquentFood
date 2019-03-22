@@ -21,7 +21,7 @@ use rand::{thread_rng};
 
 use cgmath::{InnerSpace, SquareMatrix, Matrix4, Point3, Deg, Vector2, Vector3, Vector4, PerspectiveFov};
 
-const DEV: bool = true;
+const DEV: bool = false;
 
 const DEFAULT_ZOOM: f32 = 1.0;
 const DELTA_STEP: f32 = 0.01;
