@@ -34,7 +34,6 @@ impl Food for Banana {
   }
   
   fn get_bin_space(&self) -> i32 {
-    println!("{} / {} = {}", self.data().health as f32, MAX_HEALTH as f32, (self.data().health as f32 / MAX_HEALTH as f32));
     (5.0 * (self.data().health as f32 / MAX_HEALTH as f32)).ceil() as i32
   }
   

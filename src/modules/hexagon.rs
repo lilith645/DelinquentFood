@@ -283,10 +283,8 @@ impl Hexagon {
   pub fn draw_hologram_coloured(&self, map: &Map, layout: &Layout, y_pos: f32, height: f32, colour: Vector3<f32>, draw_calls: &mut Vec<DrawCall>) {
     let position = layout.hex_to_pixel(self.clone());
     
-    let radius = map.get_radius();
-    
     draw_calls.push(DrawCall::add_instanced_hologram_model_overwrite_colour(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
-                                           Vector3::new(radius as f32/4.0, height, radius as f32/4.0),
+                                           Vector3::new(2.0, height, 2.0),
                                            Vector3::new(0.0, 90.0, 0.0),
                                            colour));
   }
@@ -294,30 +292,29 @@ impl Hexagon {
   pub fn draw_hologram(&self, map: &Map, layout: &Layout, y_pos: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
     let position = layout.hex_to_pixel(self.clone());
     
-    let radius = map.get_radius();
-    
     draw_calls.push(DrawCall::add_instanced_hologram_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
-                                           Vector3::new(radius as f32/4.0, height, radius as f32/4.0),
+                                           Vector3::new(2.0, height, 2.0),
                                            Vector3::new(0.0, 90.0, 0.0)));
   }
   
   pub fn draw(&self, map: &Map, layout: &Layout, y_pos: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
     let position = layout.hex_to_pixel(self.clone());
     
-    let radius = map.get_radius();
-    
     draw_calls.push(DrawCall::add_instanced_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
-                                           Vector3::new(radius as f32/3.95, height, radius as f32/3.95),
+                                           Vector3::new(2.025316456, height, 2.025316456),
                                            Vector3::new(0.0, 90.0, 0.0)));
   }
   
   pub fn draw_scaled(&self, map: &Map, layout: &Layout, y_pos: f32, scale: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
     let position = layout.hex_to_pixel(self.clone());
     
-    let radius = map.get_radius();
+    let mut y_pos = y_pos;
+    if self.is_end() {
+      y_pos -= 10.0;
+    }
     
     draw_calls.push(DrawCall::add_instanced_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
-                                           Vector3::new(radius as f32/3.95*scale, height, radius as f32/3.95*scale),
+                                           Vector3::new(2.025316456*scale, height, 2.025316456*scale),
                                            Vector3::new(0.0, 90.0, 0.0)));
   }
   

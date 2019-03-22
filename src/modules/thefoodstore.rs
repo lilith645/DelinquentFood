@@ -110,6 +110,12 @@ impl FoodStore {
     self.current_wave
   }
   
+  pub fn skip_wave(&mut self) {
+    self.current_wave += 1;
+    self.wave_delta = 0.0;
+    self.current_idx = 0;
+  }
+  
   pub fn next_wave(&mut self) -> bool {
     let mut next_wave_started = false;
     if self.current_wave < self.waves.len() {

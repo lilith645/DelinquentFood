@@ -9,7 +9,7 @@ use crate::modules::food::Food;
 use crate::modules::appliances::{Dishwasher, Fridge, MeatTenderizer, CoffeeMachine, SaltGrinder};
 use crate::modules::appliances::traits::{Appliance, TargetPriority};
 use crate::modules::weapons::{Weapon};
-use crate::modules::hexagon::{Layout, Hexagon, HexagonType};
+use crate::modules::hexagon::{Layout, Hexagon, HexagonType, HexDirection};
 use crate::modules::thefoodstore::FoodStore;
 
 use crate::modules::update::update_game;
@@ -20,6 +20,8 @@ use rand;
 use rand::{thread_rng};
 
 use cgmath::{InnerSpace, SquareMatrix, Matrix4, Point3, Deg, Vector2, Vector3, Vector4, PerspectiveFov};
+
+const DEV: bool = true;
 
 const DEFAULT_ZOOM: f32 = 1.0;
 const DELTA_STEP: f32 = 0.01;
@@ -46,6 +48,10 @@ pub struct GameScreen {
   escaped_pressed_last_frame: bool,
   space_pressed_last_frame: bool,
   t_pressed_last_frame: bool,
+  f1_pressed_last_frame: bool,
+  f2_pressed_last_frame: bool,
+  f10_pressed_last_frame: bool,
+  p_pressed_last_frame: bool,
   screen_offset: Vector2<f32>,
   camera: camera::Camera,
   rng: rand::prelude::ThreadRng,
@@ -64,6 +70,7 @@ pub struct GameScreen {
   valid_place: bool,
   the_food_store: FoodStore,
   money: i32,
+  minimal_ui: bool,
 }
 
 impl GameScreen {
@@ -89,6 +96,10 @@ impl GameScreen {
       escaped_pressed_last_frame: false,
       space_pressed_last_frame: false,
       t_pressed_last_frame: false,
+      f1_pressed_last_frame: false,
+      f2_pressed_last_frame: false,
+      f10_pressed_last_frame: false,
+      p_pressed_last_frame: false,
       screen_offset: Vector2::new(0.0, 0.0),
       camera: camera,
       rng: thread_rng(),
@@ -107,6 +118,7 @@ impl GameScreen {
       valid_place: false,
       the_food_store: store,
       money: 300,
+      minimal_ui: false,
     }
   }
   
@@ -118,6 +130,10 @@ impl GameScreen {
       escaped_pressed_last_frame: false,
       space_pressed_last_frame: false,
       t_pressed_last_frame: false,
+      f1_pressed_last_frame: false,
+      f2_pressed_last_frame: false,
+      f10_pressed_last_frame: false,
+      p_pressed_last_frame: false,
       screen_offset,
       camera,
       rng,
@@ -136,6 +152,7 @@ impl GameScreen {
       valid_place: false,
       the_food_store,
       money,
+      minimal_ui: false,
     }
   }
   
@@ -201,6 +218,8 @@ impl GameScreen {
     let x_pressed = self.data().keys.x_pressed();
     let k_pressed = self.data().keys.k_pressed();
     let b_pressed = self.data().keys.b_pressed();
+    let v_pressed = self.data().keys.v_pressed();
+    let f10_pressed = self.data().keys.f10_pressed();
     
     let t_pressed = self.data().keys.t_pressed();
     
@@ -217,8 +236,12 @@ impl GameScreen {
     
     self.last_mouse_pos = mouse;
     
-    if p_pressed {
-      self.game_speed = 0;
+    if p_pressed && !self.p_pressed_last_frame {
+      if self.game_speed < 2 {
+        self.game_speed = (self.game_speed+1)%2;
+      } else {
+        self.game_speed = 0;
+      }
     }
     
     if w_pressed {
@@ -272,6 +295,10 @@ impl GameScreen {
       }
     }
     
+    if f10_pressed && !self.f10_pressed_last_frame {
+      self.minimal_ui = !self.minimal_ui;
+    }
+    
     // reseting
     if k_pressed {
       self.map.reset();
@@ -285,6 +312,9 @@ impl GameScreen {
       self.game_speed = 1;
       self.total_delta = 0.0;
       self.the_food_store = FoodStore::new(&self.map);
+    }
+    
+    if v_pressed || k_pressed {
       self.camera.set_position(Vector3::new(CAMERA_DEFAULT_X, CAMERA_DEFAULT_Y, CAMERA_DEFAULT_Z));
       self.camera.set_pitch(CAMERA_DEFAULT_PITCH);
       self.camera.set_yaw(CAMERA_DEFAULT_YAW);
@@ -320,10 +350,29 @@ impl GameScreen {
       if x_pressed {
         self.money += self.appliances[idx].sell_price();
         let hex_location = self.appliances[idx].get_qr_location();
+        let range = self.appliances[idx].get_range();
         self.map.set_hexagon_type(hex_location.x, hex_location.y, HexagonType::Open);
+        
+        let appliance_hex = Hexagon::new(hex_location.x, hex_location.y, "".to_string());
+        let buffs = self.appliances[idx].update(&mut self.foods, &mut self.weapons, &mut self.data.model_sizes, &self.map, delta_time);
+        
+        let hexs = Hexagon::generate_hexagon_range(range as i32, "".to_string());
+        for hex in &hexs {
+          let t_hex = Hexagon::hex_add(appliance_hex.clone(), hex.clone());
+          for appliance in &mut self.appliances {
+            let qr = appliance.get_qr_location();
+            if qr.x == t_hex.q() && qr.y == t_hex.r() {
+              for (buff, _, _) in &buffs {
+                appliance.remove_buff(buff);
+              }
+            }
+          }
+        }
+        
         self.appliances.remove(idx);
         self.selected_appliance = None;
       }
+      
       // move tower
       if m_pressed {
         let mut appliance = self.appliances[idx].clone();
@@ -360,6 +409,8 @@ impl GameScreen {
     
     self.escaped_pressed_last_frame = escape_pressed;
     self.t_pressed_last_frame = t_pressed;
+    self.f10_pressed_last_frame = f10_pressed;
+    self.p_pressed_last_frame = p_pressed;
   }
   
   pub fn update_controller_input(&mut self) -> (bool, bool, bool, bool, f32, f32) {
@@ -402,12 +453,19 @@ impl GameScreen {
   
   pub fn update_world(&mut self, delta_time: f32) {
     let left_clicked = self.data.left_mouse;
+    let right_clicked = self.data.right_mouse;
     let mouse = self.data.mouse_pos;
     let escape_pressed = self.data().keys.escape_pressed();
     
     if self.escaped_pressed_last_frame && !escape_pressed {
       self.escaped_pressed_last_frame = false;
       self.mut_data().next_scene = true;
+    }
+    
+    if right_clicked {
+      if self.selected_appliance.is_some() {
+        self.selected_appliance = None;
+      }
     }
     
     if left_clicked {
@@ -474,10 +532,11 @@ impl GameScreen {
   
   pub fn update_placing(&mut self, delta_time: f32) {
     let left_clicked = self.data.left_mouse;
+    let right_clicked = self.data.right_mouse;
     let mouse = self.data.mouse_pos;
     let escape_pressed = self.data().keys.escape_pressed();
     
-    if self.escaped_pressed_last_frame && !escape_pressed {
+    if right_clicked {
       self.escaped_pressed_last_frame = false;
       self.mouse_state = MouseState::World;
       self.map.unhighlight_all_hexs();
@@ -584,12 +643,6 @@ impl GameScreen {
         8 => {
           self.game_speed = 16;
         },
-        16 => {
-          self.game_speed = 32;
-        },
-        32 => {
-          self.game_speed = 64;
-        },
         _ => {
           self.game_speed = 1;
         }
@@ -613,7 +666,6 @@ impl GameScreen {
     let delta_steps = (self.total_delta / DELTA_STEP).floor() as usize;
     
     self.map.update(real_delta);
-    
     
     for _ in 0..delta_steps {
       let mut some_food = None;
@@ -647,6 +699,24 @@ impl GameScreen {
       
       self.total_delta -= DELTA_STEP;
     }
+  }
+  
+  pub fn dev_hacks(&mut self, _real_delta: f32, _delta_time: f32) {
+    let f1_pressed = self.data.keys.f1_pressed();
+    let f2_pressed = self.data.keys.f2_pressed();
+    
+    if f1_pressed && !self.f1_pressed_last_frame {
+      self.foods.clear();
+      self.the_food_store.skip_wave();
+    }
+    
+    if f2_pressed && !self.f2_pressed_last_frame {
+      self.money += 1000;
+    }
+    
+    
+    self.f1_pressed_last_frame = f1_pressed;
+    self.f2_pressed_last_frame = f2_pressed;
   }
 }
 
@@ -690,6 +760,17 @@ impl Scene for GameScreen {
     self.update_objects(real_delta, delta_time);
     
     self.update_neutral(real_delta, delta_time);
+    
+    if !self.map.is_ready() {
+      self.placing_appliance = None;
+      self.selected_appliance = None;
+      self.mouse_state = MouseState::World;
+      self.game_speed = 0;
+    }
+    
+    if DEV {
+      self.dev_hacks(real_delta, delta_time);
+    }
   }
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
@@ -721,7 +802,7 @@ impl Scene for GameScreen {
             let map = &self.map;
             let some_hex = self.map.get_hex_from_qr(appliance.get_qr_location().x, appliance.get_qr_location().y);
             if let Some(hex) = some_hex {
-              if hex.is_path() {
+              if hex.is_path() || self.money < appliance.buy_cost() {
                 appliance.draw_hologram_invalid(map, draw_calls);
               } else {
                 appliance.draw_hologram(map, draw_calls);
@@ -741,13 +822,13 @@ impl Scene for GameScreen {
           
           // UI 
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+offset*6.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            Vector4::new(0.7, 1.0, 1.0, 1.0), 
                                            "Key t: Cycle targeting priority".to_string(), 
                                            "Arial".to_string()));
           
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+offset*5.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            Vector4::new(0.7, 1.0, 1.0, 1.0), 
                                            "Key X: Sell appliance $".to_owned() + &(sell_price).to_string(), 
                                            "Arial".to_string()));
@@ -756,12 +837,12 @@ impl Scene for GameScreen {
             colour = Vector4::new(1.0, 0.0, 0.0, 1.0);
           }
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+offset*4.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "Key C: Cleans appliance $".to_owned() + &(clean_price).to_string(), 
                                            "Arial".to_string()));
           draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+offset*3.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            Vector4::new(0.7, 1.0, 1.0, 1.0), 
                                            "Key M: Moves selected appliance".to_string(), 
                                            "Arial".to_string()));
@@ -769,28 +850,26 @@ impl Scene for GameScreen {
       },
     }
     
-    //draw_calls.push(DrawCall::draw_model(Vector3::new(self.ray_position.x, 0.0, self.ray_position.y), Vector3::new(2.0, 2.0, 2.0), Vector3::new(0.0, 0.0, 0.0), "Chair".to_string()));
-    
     /* 
     ** UI
     */
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(self.data.window_dim.x-160.0, self.data.window_dim.y-offset*2.0), 
-                                           Vector2::new(196.0, 196.0), 
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(self.data.window_dim.x-264.0, self.data.window_dim.y-offset), 
+                                           Vector2::new(96.0, 96.0), 
+                                           Vector4::new((self.bin as f32/100.0), 1.0-(self.bin as f32/100.0), 0.0, 1.0), 
+                                           "The Bin is ".to_owned() + &(self.bin).to_string() + "% full", 
+                                           "Arial".to_string()));
+    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(self.data.window_dim.x-196.0, self.data.window_dim.y-offset*2.0), 
+                                           Vector2::new(96.0, 96.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Money $".to_owned() + &(self.money).to_string(), 
                                            "Arial".to_string()));
-    draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(self.data.window_dim.x-offset*3.0, self.data.window_dim.y-96.0), 
-                                           Vector2::new(196.0, 196.0), 
+    draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(self.data.window_dim.x-160.0, self.data.window_dim.y-offset*3.0), 
+                                           Vector2::new(96.0, 96.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Key B: Empty Bin $".to_owned() + &(BIN_CLEAN_COST).to_string(), 
                                            "Arial".to_string()));
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, self.data.window_dim.y-96.0), 
-                                           Vector2::new(128.0, 128.0), 
-                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "Bin is ".to_owned() + &(self.bin).to_string() + "% full.", 
-                                           "Arial".to_string()));
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, self.data.window_dim.y-128.0), 
-                                           Vector2::new(128.0, 128.0), 
+    draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(self.data.window_dim.x*0.5, self.data.window_dim.y-32.0), 
+                                           Vector2::new(132.0, 132.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Wave: ".to_owned() + &(self.the_food_store.wave_number() + 1).to_string(), 
                                            "Arial".to_string()));
@@ -812,85 +891,139 @@ impl Scene for GameScreen {
       colour = Vector4::new(1.0, 0.0, 0.0, 1.0);
     }
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+offset*2.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "Key 1: Buy Dishwasher $".to_owned() + &(dishwasher_cost).to_string(), 
                                            "Arial".to_string()));
-   draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+offset*1.0), 
-                                           Vector2::new(128.0, 128.0), 
+   
+   if !self.minimal_ui {
+     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+offset*1.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "  (Range: 3, LE: 2, Single Shot, Medium firing)".to_owned(), 
                                            "Arial".to_string()));
-    
+    }
     
     colour = Vector4::new(1.0, 1.0, 1.0, 1.0);
     if fridge_cost > self.money {
       colour = Vector4::new(1.0, 0.0, 0.0, 1.0);
     }
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5+offset*0.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "Key 2: Buy Fridge $".to_owned() + &(fridge_cost).to_string(),
                                            "Arial".to_string()));
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*1.0), 
-                                           Vector2::new(128.0, 128.0), 
+    
+    if !self.minimal_ui {
+      draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*1.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "  (Range: 1, LE: 3, All Hex, Slow firing)".to_string(),
                                            "Arial".to_string()));
+    }
+    
     colour = Vector4::new(1.0, 1.0, 1.0, 1.0);
     if tenderiser_cost > self.money {
       colour = Vector4::new(1.0, 0.0, 0.0, 1.0);
     }
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*2.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "Key 3: Buy MeatTenderizer $".to_owned() + &(tenderiser_cost).to_string(),
                                            "Arial".to_string()));
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*3.0), 
-                                           Vector2::new(128.0, 128.0), 
+    
+    if !self.minimal_ui {
+      draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*3.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "  (Range: 1, LE: 4, Hex in directions of hex faces, Very Slow firing)".to_string(),
                                            "Arial".to_string()));
+    }
+    
     colour = Vector4::new(1.0, 1.0, 1.0, 1.0);
     if coffee_cost > self.money {
       colour = Vector4::new(1.0, 0.0, 0.0, 1.0);
     }
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*4.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "Key 4: Buy Coffee Machine $".to_owned() + &(coffee_cost).to_string(),
                                            "Arial".to_string()));
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*5.0), 
-                                           Vector2::new(128.0, 128.0), 
+    
+    if !self.minimal_ui {
+      draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*5.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "  (Range: 2, LE: 5, Buffs: Range up, LE up, AS up, Sell price down)".to_string(),
                                            "Arial".to_string()));
+    }
+    
     colour = Vector4::new(1.0, 1.0, 1.0, 1.0);
     if salt_grinder_cost > self.money {
       colour = Vector4::new(1.0, 0.0, 0.0, 1.0);
     }
     draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*6.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "Key 5: Buy Salt Grinder $".to_owned() + &(salt_grinder_cost).to_string(),
                                            "Arial".to_string()));
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*7.0), 
-                                           Vector2::new(128.0, 128.0), 
+    
+    if !self.minimal_ui {
+      draw_calls.push(DrawCall::draw_text_basic(Vector2::new(16.0, self.data.window_dim.y*0.5-offset*7.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            colour, 
                                            "  (Range: 2, LE: 3, multi Shot, fast firing)".to_string(),
                                            "Arial".to_string()));
+    }
     
     // Game Speed
-    draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(128.0, 48.0), 
-                                           Vector2::new(160.0, 160.0), 
+    
+    if !self.minimal_ui {
+      draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(self.data.window_dim.x - 196.0, 160.0), 
+                                           Vector2::new(96.0, 96.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0),
+                                           "Right click to Unselect appliance".to_string(), 
+                                           "Arial".to_string()));
+      draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(128.0, 80.0), 
+                                           Vector2::new(96.0, 96.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0),
+                                           "Key v: resets camera".to_string(), 
+                                           "Arial".to_string()));
+      draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(164.0, 48.0), 
+                                           Vector2::new(96.0, 96.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0),
                                            "Key k: resets current map".to_string(), 
                                            "Arial".to_string()));
-    draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(64.0, 16.0), 
-                                           Vector2::new(196.0, 196.0), 
+      draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(self.data.window_dim.x - 160.0, 128.0), 
+                                           Vector2::new(96.0, 96.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key F10 for minimal ui".to_string(), 
+                                           "Arial".to_string()));
+      draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(self.data.window_dim.x - 160.0, 96.0), 
+                                           Vector2::new(96.0, 96.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key P to pause".to_string(), 
+                                           "Arial".to_string()));
+      draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(self.data.window_dim.x - 216.0, 64.0), 
+                                           Vector2::new(96.0, 96.0), 
+                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
+                                           "Key Space for 1x/2x/.../16x speed".to_string(), 
+                                           "Arial".to_string()));
+    }
+    
+    draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(96.0, 16.0), 
+                                           Vector2::new(96.0, 96.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "Speed: x".to_owned() + &(self.game_speed).to_string(), 
                                            "Arial".to_string()));
+    
+    if self.game_speed == 0 && self.map.is_ready() {
+      draw_calls.push(DrawCall::draw_text_basic_centered(Vector2::new(self.data.window_dim.x*0.5, self.data.window_dim.y*0.5),
+                                           Vector2::new(196.0, 196.0), 
+                                           Vector4::new(1.0, 0.0, 1.0, 1.0), 
+                                           "Paused".to_string(), 
+                                           "Arial".to_string()));
+    }
     
     draw_calls.push(DrawCall::draw_instanced_model("Hexagon".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("BlueHexagon".to_string()));
@@ -909,7 +1042,7 @@ impl Scene for GameScreen {
     draw_calls.push(DrawCall::draw_instanced_model("Salt".to_string()));
     
     draw_calls.push(DrawCall::draw_instanced_model("Strawberry".to_string()));
-    draw_calls.push(DrawCall::draw_instanced_model("Banana".to_string())); // Banana
+    draw_calls.push(DrawCall::draw_instanced_model("Banana".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("Cake".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("Pineapple".to_string()));
     draw_calls.push(DrawCall::draw_instanced_model("Mushroom".to_string()));

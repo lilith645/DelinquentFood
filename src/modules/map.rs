@@ -89,7 +89,7 @@ impl Map {
       panic!("Cant find map file");
     }
     
-    let layout = Layout::new(Vector2::new(0.0, 0.0), Vector2::new(radius as f32, radius as f32));
+    let layout = Layout::new(Vector2::new(0.0, 0.0), Vector2::new(8.0, 8.0));
     
     let path = Layout::calculate_path(&mut hexagons);
     

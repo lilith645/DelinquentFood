@@ -92,11 +92,15 @@ pub trait Food: FoodClone {
       self.mut_data().max_health = self.data().health;
     }
     
+    let mut speed = self.data().speed;
+    
     if (self.data().position.x-self.data().target.x + self.data().position.z-self.data().target.y).abs() < 0.4 {
       self.mut_data().path_number += 1;
       if self.data().path_number >= self.data().path.len() as u32 {
         self.mut_data().rotten = true;
         self.mut_data().cooked = false;
+        self.mut_data().path_number -= 1;
+        self.mut_data().position.y -= speed*delta_time;
         return;
       }
       
@@ -111,7 +115,6 @@ pub trait Food: FoodClone {
     let direction = Vector2::new(self.data().target.x-self.data().position.x, self.data().target.y-self.data().position.z).normalize();
     let angle = Deg::atan2(direction.x, direction.y);
     
-    let mut speed = self.data().speed;
     let mut remove_debuffs = Vec::new();
     for i in 0..self.data().debuffs.len() {
       match &mut self.mut_data().debuffs[i] {
@@ -162,15 +165,16 @@ pub trait Food: FoodClone {
   }
   
   fn is_rotten(&self) -> bool {
-    self.data().rotten && !self.is_cooked()
+    self.data().rotten && !self.is_cooked() && self.data().position.y < -10.0
   }
   
   fn apply_damage(&mut self, dmg: i32) {
-    self.mut_data().health -= dmg;
-    if self.data().health <= 0 {
-      self.mut_data().cooked = true;
+    if !self.data().rotten {
+      self.mut_data().health -= dmg;
+      if self.data().health <= 0 {
+        self.mut_data().cooked = true;
+      }
     }
-   // println!("id: {}, health: {}", self.data().id, self.data().health);
   }
   
   fn apply_debuffs(&mut self, debuffs: Vec<Debuff>) {
@@ -194,8 +198,6 @@ pub trait Food: FoodClone {
   }
   
   fn draw(&self, draw_calls: &mut Vec<DrawCall>) {
-    //draw_calls.push(DrawCall::draw_model(self.data().position, self.data().size, self.data().rotation, self.data().model.to_string()));
-    //draw_calls.push(DrawCall::add_instanced_model(self.data().model.to_string(), self.data().position, self.data().size, self.data().rotation));
     draw_calls.push(DrawCall::add_instanced_model_overwrite_colour(self.data().model.to_string(), self.data().position, self.data().size, self.data().rotation, Vector3::new(1.0 - (self.data().health as f32/self.data().max_health as f32), self.data().health as f32/self.data().max_health as f32, 0.0)));
   }
 }

@@ -17,13 +17,15 @@ use cgmath::{Vector2, Vector4};
 
 use std::time;
 
-const VERSION: &str = "0.1.0";
+const MAJOR: u32 = 0;
+const MINOR: u32 = 7;
+const PATCH: u32 = 1;
 
 fn benchmark(draw_calls: &mut Vec<DrawCall>, dimensions: [f32; 2]) {
-  draw_calls.push(DrawCall::draw_text_basic(Vector2::new(dimensions[0] - 64.0, 5.0), 
-                                           Vector2::new(128.0, 128.0), 
+  draw_calls.push(DrawCall::draw_text_basic(Vector2::new(dimensions[0] - 80.0, 15.0), 
+                                           Vector2::new(64.0, 64.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           "v".to_string() + VERSION, 
+                                           "v".to_string() + &MAJOR.to_string() + "." + &MINOR.to_string() + "." + &PATCH.to_string(), 
                                            "Arial".to_string()));
                                            /*
   draw_calls.push(DrawCall::draw_text_basic(Vector2::new(10.0, dimensions[1]*0.4), 
@@ -45,23 +47,23 @@ fn fps_overlay(draw_calls: &mut Vec<DrawCall>, dimensions: [f32; 2], fps: f64, m
   ms.truncate(4);
   
   draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, dimensions[1]-32.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(96.0, 96.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "fps: ".to_string() + &fps, 
                                            "Arial".to_string()));
   draw_calls.push(DrawCall::draw_text_basic(Vector2::new(64.0, dimensions[1]-64.0), 
-                                           Vector2::new(128.0, 128.0), 
+                                           Vector2::new(96.0, 96.0), 
                                            Vector4::new(1.0, 1.0, 1.0, 1.0), 
                                            "".to_string() + &ms + &" ms/frame".to_string(), 
                                            "Arial".to_string()));
 }
 
 fn main() {
-  let mut graphics = CoreMaat::new("Delinquent Food".to_string(), (0 as u32) << 22 | (0 as u32) << 12 | (6 as u32), 1280.0, 720.0, true);
+  let mut graphics = CoreMaat::new("Delinquent Food".to_string(), (MAJOR) << 22 | (MINOR) << 12 | (PATCH), 1280.0, 720.0, true);
   
   graphics.preload_font(String::from("Arial"),
-                        String::from("./resources/Fonts/Purisa.png"),
-                        include_bytes!("../resources/Fonts/Purisa.fnt"));
+                        String::from("./resources/Fonts/TimesNewRoman.png"),
+                        include_bytes!("../resources/Fonts/TimesNewRoman.fnt"));
   graphics.preload_texture(String::from("Logo"), 
                            String::from("./resources/Textures/Logo.png"));
   
@@ -121,7 +123,7 @@ fn main() {
   graphics.create_model_instance_buffer("Salt".to_string());
   
   graphics.create_model_instance_buffer("Strawberry".to_string());
-  graphics.create_model_instance_buffer("Banana".to_string()); // Banana 
+  graphics.create_model_instance_buffer("Banana".to_string()); 
   graphics.create_model_instance_buffer("Cake".to_string());
   graphics.create_model_instance_buffer("Pineapple".to_string());
   graphics.create_model_instance_buffer("Mushroom".to_string());
@@ -172,14 +174,10 @@ fn main() {
     
     game.set_window_dimensions(Vector2::new(dimensions[0], dimensions[1]));
     
+
+    game.draw(&mut draw_calls);
     game.update(delta_time as f32);
     
-    game.draw(&mut draw_calls);
-    draw_calls.push(DrawCall::draw_text_basic(Vector2::new(dimensions[0] - 256.0, 100.0), 
-                                           Vector2::new(128.0, 128.0), 
-                                           Vector4::new(1.0, 1.0, 1.0, 1.0), 
-                                           (draw_calls.len() + 1).to_string(), 
-                                           "Arial".to_string()));
     benchmark(&mut draw_calls, dimensions);
     fps_overlay(&mut draw_calls, dimensions, last_fps, ms);
     

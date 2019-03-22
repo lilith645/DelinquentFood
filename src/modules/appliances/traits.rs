@@ -145,7 +145,7 @@ pub trait Appliance: ApplianceClone {
   }
   
   fn max_life_expectancy(&self) -> i32 {
-    self.data().max_life_expectancy + if self.data().buffs.contains(&Buff::LifeExpectancy) { 1 } else { 0 }
+    self.data().max_life_expectancy
   }
   
   fn get_fire_rate(&self) -> f32 {
@@ -171,6 +171,27 @@ pub trait Appliance: ApplianceClone {
   fn apply_buff(&mut self, buff: Buff) {
     if !self.data().buffs.contains(&buff) {
       self.mut_data().buffs.push(buff);
+      if buff == Buff::LifeExpectancy {
+        self.mut_data().life_expectancy += 1;
+        self.mut_data().max_life_expectancy += 1;
+      }
+    }
+  }
+  
+  fn remove_buff(&mut self, buff: &Buff) {
+    if self.data().buffs.contains(&buff) {
+      for i in 0..self.data().buffs.len() {
+        if buff == &self.data().buffs[i] {
+          self.mut_data().buffs.remove(i);
+          if buff == &Buff::LifeExpectancy {
+            self.mut_data().max_life_expectancy -= 1;
+            if self.data().life_expectancy > self.data().max_life_expectancy {
+              self.mut_data().life_expectancy = self.data().max_life_expectancy;
+            }
+          }
+          break;
+        }
+      }
     }
   }
   
@@ -377,7 +398,7 @@ pub trait Appliance: ApplianceClone {
     let distance = (self.data().position-cam_pos).magnitude();
     let indicator_size = 114.0/distance*10.0;
     let offset = 114.0/distance*-8.0;
-    let target_text_size = 114.0/distance*160.0;
+    let target_text_size = 114.0/distance*96.0;
     let target_offset = 114.0/distance*-38.0;
     
     let screen_coords = camera.world_to_screen_coords(self.data().position+self.data().offset, window_dim);
