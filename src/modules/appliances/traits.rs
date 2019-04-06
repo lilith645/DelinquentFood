@@ -231,11 +231,11 @@ pub trait Appliance: ApplianceClone {
         let other_hex = map.pixel_to_hex(food_pos);
         let hex = Hexagon::new(self.data().tile_location.x, self.data().tile_location.y, "".to_string());
         
-        let dist = Hexagon::hex_distance(hex.clone(), other_hex.clone());
+        let dist = Hexagon::hex_distance(&hex, &other_hex);
       
         if dist <= self.get_range() as i32 {
           if self.data().directional_range && self.get_range() > 1 {
-            if !Hexagon::is_on_same_axis(hex, other_hex) {
+            if !Hexagon::is_on_same_axis(&hex, &other_hex) {
               continue;
             }
           }

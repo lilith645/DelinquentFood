@@ -3,10 +3,12 @@ use std::io::{BufRead, BufReader};
 
 use crate::modules::hexagon::Hexagon;
 use crate::modules::hexagon::Layout;
-use crate::modules::hexagon::HexagonType;
+use crate::modules::hexagon::{HexDirection, HexagonType};
 
 use maat_graphics::DrawCall;
 
+use rand;
+use rand::Rng;
 use cgmath::{InnerSpace, Vector2, Vector3};
 
 const TILE_DEFAULT_HEIGHT: f32 = 0.0;
@@ -26,6 +28,104 @@ pub struct Map {
 }
 
 impl Map {
+  pub fn new_random_map(radius: i32, rng: &mut rand::prelude::ThreadRng) -> Map {
+    let mut radius = radius;
+    if radius < 2 {
+      radius = 2;
+    }
+    let mut start_hex: usize = 0;
+    let mut current_hex: usize = 0;
+    let mut end_hex: usize = 0;
+    
+    let mut hexagons = Hexagon::generate_hexagon_range(radius, "Hexagon".to_string());
+    
+    let start_q = radius-2;
+    let start_r = -radius;
+    let end_q = -(radius-2);
+    let end_r = radius;
+    
+    for i in 0..hexagons.len() {
+      if hexagons[i].q() == start_q && hexagons[i].r() == start_r {
+        current_hex = i;
+        continue;
+      }
+      if hexagons[i].q() == end_q && hexagons[i].r() == end_r {
+        end_hex = i;
+        continue;
+      }
+    }
+    
+    hexagons[current_hex].set_as_start();
+    hexagons[end_hex].set_as_end();
+    
+    let mut found_end = false;
+    
+    while !found_end {
+      let direction: u32 = (rng.gen::<f32>()*6.0) as u32;
+      
+      let mut neighbour: Hexagon = hexagons[current_hex].clone();
+      match direction {
+        0 => {
+          neighbour = Hexagon::hex_neighbour(&hexagons[current_hex], &HexDirection::NorthEast);
+        },
+        1 => {
+          neighbour = Hexagon::hex_neighbour(&hexagons[current_hex], &HexDirection::East);
+        },
+        2 => {
+          neighbour = Hexagon::hex_neighbour(&hexagons[current_hex], &HexDirection::SouthEast);
+        },
+        3 => {
+          neighbour = Hexagon::hex_neighbour(&hexagons[current_hex], &HexDirection::SouthWest);
+        },
+        4 => {
+          neighbour = Hexagon::hex_neighbour(&hexagons[current_hex], &HexDirection::West);
+        },
+        5 => {
+          neighbour = Hexagon::hex_neighbour(&hexagons[current_hex], &HexDirection::NorthWest);
+        },
+        _ => {},
+      }
+      
+      for i in 0..hexagons.len() {
+        if neighbour.q() == hexagons[i].q() && neighbour.r() == hexagons[i].r() {
+          if hexagons[i].is_start() {
+            break;
+          }
+          
+          if hexagons[i].is_end() {
+            found_end = true;
+            break;
+          }
+          
+          hexagons[i].set_as_path();
+          current_hex = i;
+          break;
+        }
+      }
+    }
+    
+    let layout = Layout::new(Vector2::new(0.0, 0.0), Vector2::new(8.0, 8.0));
+    
+    let path = Layout::calculate_path(&mut hexagons);
+    for i in 0..hexagons.len() {
+      if !path.contains(&(i as u32)) {
+        if !hexagons[i].is_start() && !hexagons[i].is_end() {
+          hexagons[i].plain();
+        }
+      }
+    }
+    
+    Map {
+      radius,
+      layout,
+      path,
+      map: hexagons,
+      is_ready: false,
+      resetting: false,
+      tile_delta: TILE_MAX_HEIGHT,
+    }
+  }
+  
   pub fn new(map_name: String) -> Map {
     let mut hexagons: Vec<Hexagon> = Vec::new();
     
@@ -59,7 +159,7 @@ impl Map {
             let mut hex_idx = 0;
             
             for i in 0..hexagons.len() {
-              if Hexagon::hex_equals(hexagons[i].clone(), hex.clone()) {
+              if Hexagon::hex_equals(&hexagons[i], &hex) {
                 hex_idx = i;
                 break;
               }
@@ -67,6 +167,7 @@ impl Map {
             
             if v[i] == "s" {
               hexagons[hex_idx].set_as_start();
+              println!("start q {} r {}", hexagons[hex_idx].q(), hexagons[hex_idx].r());
             }
             
             if v[i] == "0" {
@@ -75,6 +176,7 @@ impl Map {
             
             if v[i] == "e" {
               hexagons[hex_idx].set_as_end();
+              println!("end q {} r {}", hexagons[hex_idx].q(), hexagons[hex_idx].r());
             }
           }
         }
@@ -121,7 +223,7 @@ impl Map {
     }
   }
   
-  pub fn draw(&self, cam_pos: Vector2<f32>, draw_calls: &mut Vec<DrawCall>) {
+  pub fn draw(&self, hexagon_size: Vector3<f32>, cam_pos: Vector2<f32>, draw_calls: &mut Vec<DrawCall>) {
     let cam_hex = self.pixel_to_hex(cam_pos);
     
     for hexagon in &self.map {
@@ -130,7 +232,7 @@ impl Map {
       let mut scale = 1.0;
       
       if !self.is_ready || self.resetting {
-        let dist = cam_pos - self.layout.hex_to_pixel(hexagon.clone());
+        let dist = cam_pos - self.layout.hex_to_pixel(&hexagon);
         let mag = dist.magnitude();
         y_pos = mag*3.0 + self.tile_delta;
         
@@ -151,7 +253,7 @@ impl Map {
           1.0
         }
       };
-      hexagon.draw_scaled(&self, &self.layout, y_pos, scale, height, draw_calls);
+      hexagon.draw_scaled(&self, &self.layout, hexagon_size, y_pos, scale, height, draw_calls);
     }
   }
   
@@ -189,11 +291,11 @@ impl Map {
   }
   
   pub fn tile_position_from_index(&self, idx: usize) -> Vector2<f32> {
-    self.layout.hex_to_pixel(self.map[idx].clone())
+    self.layout.hex_to_pixel(&self.map[idx])
   }
   
   pub fn get_tile_position(&self, q: i32, r: i32) -> Vector2<f32> {
-    self.layout.hex_to_pixel(Hexagon::new(q, r, "".to_string()))
+    self.layout.hex_to_pixel(&Hexagon::new(q, r, "".to_string()))
   }
   
   pub fn get_qr_from_index(&self, idx: usize) -> Vector2<i32> {
@@ -206,7 +308,7 @@ impl Map {
     let mut idx = None;
     
     for i in 0..self.map.len() {
-      if Hexagon::hex_equals(test_hex.clone(), self.map[i].clone()) {
+      if Hexagon::hex_equals(&test_hex, &self.map[i]) {
         idx = Some(i as usize);
         break;
       }
@@ -247,7 +349,7 @@ impl Map {
   
   pub fn highlight_hex(&mut self, light_hex: Hexagon) {
     for hexagon in &mut self.map {
-      if Hexagon::hex_equals(light_hex.clone(), hexagon.clone()) {
+      if Hexagon::hex_equals(&light_hex, &hexagon) {
         hexagon.highlight();
       }
     }

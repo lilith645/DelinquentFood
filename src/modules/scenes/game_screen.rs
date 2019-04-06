@@ -83,7 +83,10 @@ impl GameScreen {
     camera.set_yaw(CAMERA_DEFAULT_YAW);
     camera.set_move_speed(CAMERA_DEFAULT_SPEED);
     
-    let map = Map::new(map_name.to_string());
+    let mut rng =  thread_rng();
+    
+    let map = Map::new_random_map(5, &mut rng);
+    //let map = Map::new(map_name.to_string());
     
     let path = map.get_path();
     let food_pos = map.tile_position_from_index(path[0] as usize);
@@ -101,8 +104,8 @@ impl GameScreen {
       f10_pressed_last_frame: false,
       p_pressed_last_frame: false,
       screen_offset: Vector2::new(0.0, 0.0),
-      camera: camera,
-      rng: thread_rng(),
+      camera,
+      rng,
       last_mouse_pos: Vector2::new(-1.0, -1.0),
       total_delta: 0.0,
       map,
@@ -358,7 +361,7 @@ impl GameScreen {
         
         let hexs = Hexagon::generate_hexagon_range(range as i32, "".to_string());
         for hex in &hexs {
-          let t_hex = Hexagon::hex_add(appliance_hex.clone(), hex.clone());
+          let t_hex = Hexagon::hex_add(&appliance_hex, &hex);
           for appliance in &mut self.appliances {
             let qr = appliance.get_qr_location();
             if qr.x == t_hex.q() && qr.y == t_hex.r() {
@@ -390,7 +393,7 @@ impl GameScreen {
         let appliance_hex = Hexagon::new(qr.x,qr.y, "".to_string());
         
         for hexagon in &hexagons {
-          let hex = Hexagon::hex_add(appliance_hex.clone(), hexagon.clone());
+          let hex = Hexagon::hex_add(&appliance_hex, hexagon);
           let q = hex.q();
           let r = hex.r();
           if self.map.is_valid_qr(q,r) {
@@ -595,7 +598,7 @@ impl GameScreen {
                 self.map.set_hexagon_type(qr.x, qr.y, HexagonType::Open);
                 self.appliances.remove(idx);
                 self.selected_appliance = Some(self.appliances.len());
-                let dist = Hexagon::hex_distance(Hexagon::new(q,r, "".to_string()), Hexagon::new(qr.x, qr.y, "".to_string()));
+                let dist = Hexagon::hex_distance(&Hexagon::new(q,r, "".to_string()), &Hexagon::new(qr.x, qr.y, "".to_string()));
                 appliance.moved_tiles(dist);
                 self.map.unhighlight_all_hexs();
               } else { 
@@ -791,7 +794,19 @@ impl Scene for GameScreen {
     
     let cam_pos = self.camera.get_position();
     
-    self.map.draw(cam_pos.xz(), draw_calls);
+    let hexagon_name = "Hexagon".to_string();
+    let hexagon_model_size: Vector3<f32> = {
+      let mut model_size = Vector3::new(1.0, 1.0, 1.0);
+      for model in &self.data().model_sizes {
+        if model.0 == hexagon_name {
+            model_size = model.1
+        }
+      }
+      
+      model_size
+    };
+    
+    self.map.draw(hexagon_model_size, cam_pos.xz(), draw_calls);
     
     let offset = 32.0;
     
@@ -802,7 +817,7 @@ impl Scene for GameScreen {
             let map = &self.map;
             let some_hex = self.map.get_hex_from_qr(appliance.get_qr_location().x, appliance.get_qr_location().y);
             if let Some(hex) = some_hex {
-              if hex.is_path() || self.money < appliance.buy_cost() {
+              if hex.is_path() || !hex.is_open()|| self.money < appliance.buy_cost() {
                 appliance.draw_hologram_invalid(map, draw_calls);
               } else {
                 appliance.draw_hologram(map, draw_calls);

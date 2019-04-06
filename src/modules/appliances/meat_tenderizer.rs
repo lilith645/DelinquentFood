@@ -54,13 +54,13 @@ impl Appliance for MeatTenderizer {
         let location = food.get_tile_location();
         let qr = self.get_qr_location();
         let hex = Hexagon::new(qr.x, qr.y, "".to_string());
-        let some_hex_direction = Hexagon::get_hex_direction(hex.clone(), Hexagon::new(location.x, location.y, "".to_string()));
+        let some_hex_direction = Hexagon::get_hex_direction(&hex, &Hexagon::new(location.x, location.y, "".to_string()));
         
         if let Some(hex_direction) = some_hex_direction {
           for i in 0..self.get_range() {
             let mut temp_hex = hex.clone();
             for j in 0..i+1 {
-              temp_hex = Hexagon::hex_add(temp_hex, hex_direction.clone());
+              temp_hex = Hexagon::hex_add(&temp_hex, &hex_direction);
             }
             
             let mut weapon: Box<Weapon> = Box::new(Tenderizer::new());

@@ -53,7 +53,7 @@ pub fn update_game(map: &mut Map, appliances: &mut Vec<Box<Appliance>>, foods: &
       let qr = appliances[i].get_qr_location();
       let other_hex = Hexagon::new(qr.x, qr.y, "".to_string());
       
-      let dist = Hexagon::hex_distance(hex, other_hex);
+      let dist = Hexagon::hex_distance(&hex, &other_hex);
       if dist <= range as i32 {
         appliances[i].apply_buff(actual_buff);
       }

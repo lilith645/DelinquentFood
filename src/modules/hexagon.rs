@@ -1,4 +1,5 @@
 use maat_graphics::DrawCall;
+use maat_graphics::math;
 
 use crate::modules::map::Map;
 
@@ -128,10 +129,10 @@ impl Layout {
     while frontier.len() != 0 {
       let current = frontier.remove(0);
       
-      for next in &Hexagon::all_neigbors(hexagons[current].clone()) {
+      for next in &Hexagon::all_neighbours(&hexagons[current]) {
         let mut next_idx: i32 = -1;
         for i in 0..hexagons.len() {
-          if Hexagon::hex_equals(next.clone(), hexagons[i].clone()) {
+          if Hexagon::hex_equals(&next, &hexagons[i]) {
             if hexagons[i].is_path() {
               next_idx = i as i32;
             }
@@ -171,7 +172,7 @@ impl Layout {
     Layout::round_to_nearest_hex(q, r)
   }
   
-  pub fn hex_to_pixel(&self, hexagon: Hexagon) -> Vector2<f32> {
+  pub fn hex_to_pixel(&self, hexagon: &Hexagon) -> Vector2<f32> {
     let x = (F0 * hexagon.q() as f32 + F1 * hexagon.r() as f32) * self.size.x;
     let y = (F2 * hexagon.q() as f32 + F3 * hexagon.r() as f32) * self.size.y;
     
@@ -185,7 +186,7 @@ impl Layout {
     Vector2::new(size.x * (angle).cos(), size.y * (angle).sin())
   }
   
-  pub fn polygon_corners(&self, hexagon: Hexagon) -> Vec<Vector2<f32>> {
+  pub fn polygon_corners(&self, hexagon: &Hexagon) -> Vec<Vector2<f32>> {
     let mut corners: Vec<Vector2<f32>> = Vec::new();
     let center = self.hex_to_pixel(hexagon);
     for i in 0..6 {
@@ -235,6 +236,7 @@ impl Hexagon {
   
   pub fn plain(&mut self) {
     self.model = "Hexagon".to_string();
+    self.hex_type = HexagonType::Open;
   }
   
   pub fn highlight(&mut self) {
@@ -281,7 +283,7 @@ impl Hexagon {
   }
   
   pub fn draw_hologram_coloured(&self, map: &Map, layout: &Layout, y_pos: f32, height: f32, colour: Vector3<f32>, draw_calls: &mut Vec<DrawCall>) {
-    let position = layout.hex_to_pixel(self.clone());
+    let position = layout.hex_to_pixel(self);
     
     draw_calls.push(DrawCall::add_instanced_hologram_model_overwrite_colour(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
                                            Vector3::new(2.0, height, 2.0),
@@ -290,7 +292,7 @@ impl Hexagon {
   }
   
   pub fn draw_hologram(&self, map: &Map, layout: &Layout, y_pos: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
-    let position = layout.hex_to_pixel(self.clone());
+    let position = layout.hex_to_pixel(self);
     
     draw_calls.push(DrawCall::add_instanced_hologram_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
                                            Vector3::new(2.0, height, 2.0),
@@ -298,31 +300,68 @@ impl Hexagon {
   }
   
   pub fn draw(&self, map: &Map, layout: &Layout, y_pos: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
-    let position = layout.hex_to_pixel(self.clone());
+    let position = layout.hex_to_pixel(self);
     
     draw_calls.push(DrawCall::add_instanced_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
                                            Vector3::new(2.025316456, height, 2.025316456),
                                            Vector3::new(0.0, 90.0, 0.0)));
   }
   
-  pub fn draw_scaled(&self, map: &Map, layout: &Layout, y_pos: f32, scale: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
-    let position = layout.hex_to_pixel(self.clone());
-    
+  pub fn draw_scaled(&self, map: &Map, layout: &Layout, model_size_org: Vector3<f32>, y_pos: f32, scale: f32, height: f32, draw_calls: &mut Vec<DrawCall>) {
+    let height = 0.2;
+    let mut position = layout.hex_to_pixel(self);
+    let mut model_size = Vector3::new(model_size_org.x*2.025316456*scale, model_size_org.y*height, model_size_org.z*2.025316456*scale);
     let mut y_pos = y_pos;
     if self.is_end() {
       y_pos -= 10.0;
     }
+    let mut rotation = Vector3::new(0.0, 90.0, 0.0);
+    
+    let map_size = 5.0;
+    let rotation_step = 360.0/(map_size*2.0+2.0);
+    
+    position = layout.hex_to_pixel(&Hexagon::new(0, 0, "".to_string()));
+    
+    let q = self.q() as f32;
+    let r = self.r() as f32;
+    let s = self.s() as f32;
+    
+    if r == 0.0 {
+      let hex_num = q;
+      
+      let mut temp_q = 0.0;
+      let mut last_x_move = -model_size.z*0.5;
+      let mut last_y_move = 0.0;
+      
+      while temp_q < q.abs() {
+        if temp_q == 1.0 {
+          last_x_move+=0.0;
+        }
+        rotation.x = rotation_step*(temp_q+1.0)*hex_num.signum();
+        
+        position.x -= last_x_move*hex_num.signum();
+        y_pos -= last_y_move;
+        last_y_move = (model_size.z*0.5) * math::to_radians(rotation.x.abs()).sin() -
+                      (model_size.y*0.5) * math::to_radians(rotation.x.abs()).sin();
+        last_x_move = ((-model_size.z*0.5) * math::to_radians(rotation.x.abs()).cos() - 
+                      (-model_size.y*0.5) * math::to_radians(rotation.x.abs()).cos());
+        y_pos -= last_y_move;
+        position.x -= last_x_move*hex_num.signum();
+        
+        temp_q+=1.0;
+      }
+    }
     
     draw_calls.push(DrawCall::add_instanced_model(self.model.to_string(), Vector3::new(position.x, y_pos, position.y),
-                                           Vector3::new(2.025316456*scale, height, 2.025316456*scale),
-                                           Vector3::new(0.0, 90.0, 0.0)));
+                                           Vector3::new(model_size.x/model_size_org.x, model_size.y/model_size_org.y, model_size.z/model_size_org.z),
+                                           rotation));
   }
   
-  pub fn hex_distance(hexagon: Hexagon, other_hexagon: Hexagon) -> i32 {
+  pub fn hex_distance(hexagon: &Hexagon, other_hexagon: &Hexagon) -> i32 {
     Hexagon::hex_sub(hexagon, other_hexagon).length()
   }
   
-  pub fn hex_direction(direction: HexDirection) -> Hexagon {
+  pub fn hex_direction(direction: &HexDirection) -> Hexagon {
     match direction {
       HexDirection::NorthEast => {
         Hexagon::new(1, -1, "hexagon".to_string())
@@ -345,24 +384,24 @@ impl Hexagon {
     }
   }
   
-  pub fn hex_neigbor(hexagon: Hexagon, direction: HexDirection) -> Hexagon {
-    Hexagon::hex_add(hexagon, Hexagon::hex_direction(direction))
+  pub fn hex_neighbour(hexagon: &Hexagon, direction: &HexDirection) -> Hexagon {
+    Hexagon::hex_add(&hexagon, &Hexagon::hex_direction(direction))
   }
   
-  pub fn all_neigbors(hexagon: Hexagon) -> Vec<Hexagon> {
-    let mut neigbors = Vec::with_capacity(6);
+  pub fn all_neighbours(hexagon: &Hexagon) -> Vec<Hexagon> {
+    let mut neighbours = Vec::with_capacity(6);
     
-    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::NorthEast));
-    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::East));
-    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::SouthEast));
-    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::SouthWest));
-    neigbors.push(Hexagon::hex_neigbor(hexagon.clone(), HexDirection::West));
-    neigbors.push(Hexagon::hex_neigbor(hexagon, HexDirection::NorthWest));
+    neighbours.push(Hexagon::hex_neighbour(&hexagon, &HexDirection::NorthEast));
+    neighbours.push(Hexagon::hex_neighbour(&hexagon, &HexDirection::East));
+    neighbours.push(Hexagon::hex_neighbour(&hexagon, &HexDirection::SouthEast));
+    neighbours.push(Hexagon::hex_neighbour(&hexagon, &HexDirection::SouthWest));
+    neighbours.push(Hexagon::hex_neighbour(&hexagon, &HexDirection::West));
+    neighbours.push(Hexagon::hex_neighbour(&hexagon, &HexDirection::NorthWest));
     
-    neigbors
+    neighbours
   }
   
-  pub fn get_hex_direction(hex: Hexagon, other_hex: Hexagon) -> Option<Hexagon> {
+  pub fn get_hex_direction(hex: &Hexagon, other_hex: &Hexagon) -> Option<Hexagon> {
     let mut direction = None;
     
     if hex.q() == other_hex.q() {
@@ -386,13 +425,13 @@ impl Hexagon {
     }
     
     if direction.is_some() {
-      Some(Hexagon::hex_direction(direction.unwrap()))
+      Some(Hexagon::hex_direction(&direction.unwrap()))
     } else {
       None
     }
   }
   
-  pub fn is_on_same_axis(hex: Hexagon, other_hex: Hexagon) -> bool {
+  pub fn is_on_same_axis(hex: &Hexagon, other_hex: &Hexagon) -> bool {
     hex.q() == other_hex.q() || hex.r() == other_hex.r() || hex.s() == other_hex.s()
   }
   
@@ -425,25 +464,25 @@ impl Hexagon {
     hexagons
   }
   
-  pub fn hex_add(hexagon: Hexagon, other_hexagon: Hexagon) -> Hexagon {
+  pub fn hex_add(hexagon: &Hexagon, other_hexagon: &Hexagon) -> Hexagon {
     Hexagon::new(hexagon.q() + other_hexagon.q(),
                  hexagon.r() + other_hexagon.r(), 
                  hexagon.get_model())
   }
   
-  pub fn hex_sub(hexagon: Hexagon, other_hexagon: Hexagon) -> Hexagon {
+  pub fn hex_sub(hexagon: &Hexagon, other_hexagon: &Hexagon) -> Hexagon {
     Hexagon::new(hexagon.q() - other_hexagon.q(),
                  hexagon.r() - other_hexagon.r(), 
                  hexagon.get_model())
   }
   
-  pub fn hex_mul(hexagon: Hexagon, other_hexagon: Hexagon) -> Hexagon {
+  pub fn hex_mul(hexagon: &Hexagon, other_hexagon: &Hexagon) -> Hexagon {
     Hexagon::new(hexagon.q() * other_hexagon.q(),
                  hexagon.r() * other_hexagon.r(), 
                  hexagon.get_model())
   }
   
-  pub fn hex_equals(hexagon: Hexagon, other_hexagon: Hexagon) -> bool {
+  pub fn hex_equals(hexagon: &Hexagon, other_hexagon: &Hexagon) -> bool {
     (hexagon.q() == other_hexagon.q() && hexagon.r() == other_hexagon.r())
   }
 }

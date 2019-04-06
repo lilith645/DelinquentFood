@@ -16,7 +16,7 @@ pub fn collisions(map: &Map, foods: &mut Vec<Box<Food>>, weapons: &mut Vec<Box<W
       if weapon.hasnt_hit(food.get_id()) {
         let w_hex = weapon.get_hexagon(map);
         
-        if Hexagon::hex_equals(hex.clone(), w_hex) {
+        if Hexagon::hex_equals(&hex, &w_hex) {
           weapon.hit_target(food);
         }
       }

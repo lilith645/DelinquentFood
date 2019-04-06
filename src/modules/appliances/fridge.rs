@@ -47,7 +47,7 @@ impl Appliance for Fridge {
     
     for food in foods.iter() {
       let location = food.get_tile_location();
-      let dist = Hexagon::hex_distance(Hexagon::new(self.data.tile_location.x, self.data.tile_location.y, "".to_string()), Hexagon::new(location.x, location.y, "".to_string()));
+      let dist = Hexagon::hex_distance(&Hexagon::new(self.data.tile_location.x, self.data.tile_location.y, "".to_string()), &Hexagon::new(location.x, location.y, "".to_string()));
       
       if dist <= self.get_range() as i32 {
         self.data.rotation.y = self.rotate_towards(self.data.position, food, 90.0);
@@ -60,7 +60,7 @@ impl Appliance for Fridge {
           let hexagons = Hexagon::generate_hexagon_range(radius, "".to_string());
           
           for hexagon in hexagons {
-            let new_hex = Hexagon::hex_add(hex.clone(), hexagon.clone());
+            let new_hex = Hexagon::hex_add(&hex, &hexagon);
             let mut weapon: Box<Weapon> = Box::new(ColdSnap::new());
             self.add_weapon_modifiers(&mut weapon);
             let pos = map.get_tile_position(new_hex.q(), new_hex.r());
